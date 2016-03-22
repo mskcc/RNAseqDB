@@ -1,3 +1,7 @@
+##############################################
+## The code can run in both hal and luna. This
+## is the setting I am using to run in hal
+
 ##########################################
 ## Paths & meta data files
 ##########################################
@@ -31,7 +35,6 @@ mRIN_dir		= /cbio/ski/schultz/home/wangq/bin/mRIN
 ## Reference files indexed for aligners
 ##########################################
 
-# HAL
 ref_fasta		= /cbio/ski/schultz/home/wangq/ref/genome/hg19/hg19.fa
 gencode			= /cbio/ski/schultz/home/wangq/ref/transcript/gencode.v19/gencode.v19.annotation.gtf
 index_bt2_genome	= /cbio/ski/schultz/home/wangq/ref/genome/hg19/bowtie2/hg19
@@ -40,18 +43,11 @@ index_star		= /cbio/ski/schultz/home/wangq/ref/transcript/gencode.v19/star
 house_keeping_genes	= /cbio/ski/schultz/home/wangq/ref/transcript/gencode.v19/hg19.HouseKeeping-LongGenes.bed
 ENSG_UCSC_common_genes	= /cbio/ski/schultz/home/wangq/ref/transcript/gencode.v19/gencode.v19_ucsc.known.txt
 
-# LUNA
-#ref_fasta		= /ifs/e63data/schultzlab/wangq/ref/genome/hg38.fa
-#gencode		= /ifs/e63data/schultzlab/wangq/ref/transcript/gencode.v21.annotation.gtf
-#index_bt2_genome	= /ifs/e63data/schultzlab/wangq/ref/genome/bowtie2/hg38
-#index_bt2_transcipt 	= /ifs/e63data/schultzlab/wangq/ref/transcript/bowtie2/known
-#index_rsem   		= /ifs/e63data/schultzlab/wangq/ref/transcript/rsem/hg38
-#picard_dir   		= /opt/common/CentOS_6/picard/picard-tools-1.129
-#tophat_dir   		= /opt/common/CentOS_6/tophat/tophat-2.0.13/bin
-
 ##########################################
-## Software Parameters
+## Machine specific
 ##########################################
 
-mailto         		= wangq@cbio.mskcc.org
-thread_no      		= 4
+cluster			= hal
+thread_no      		= 8
+memory			= 40
+wall_time		= 40
