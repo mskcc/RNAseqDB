@@ -10,7 +10,8 @@ We collect RNA-seq of healthy human tissues from GTEx study, and both tumors and
 
 Pipeline
 ----------
-We used STAR to align RNA-seq reads, RSEM to quantify gene expression, mRIN to discard degraded samples, and SVAseq to correct batch bias.  Our pipeline also run FeatureCounts to quantify read counts. 
+We used STAR to align RNA-seq reads, RSEM to quantify gene expression, mRIN to discard degraded samples, RSeQC
+to control quality, and SVAseq to correct batch bias.  Our pipeline also run FeatureCounts to quantify read counts. 
 
 Although this pipeline is not as fast as the latest RNA-seq tools such as Kallisto, it provides the functionality we need:
  1. It generates BAM files that are required by QC tools.
