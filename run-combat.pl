@@ -21,6 +21,7 @@ push @usage, "  -a, --tissue2       Another TCGA tissue type to run ComBat toget
 push @usage, "  -b, --tissue3       Another TCGA tissue type to run ComBat together with other tissues\n";
 push @usage, "  -n, --norm-method   Method to normalize gene expression: TPM | Count | RSEM | FeatureCounts\n\n";
 
+
 my ($help, $tissue, $tissue2, $tissue3, $normalization);
 
 GetOptions
@@ -78,11 +79,6 @@ if ($tissue3){
 
 my $work_dir = getcwd;
 my (@samples, %expr, %gene, $data_matrix_fh);
-
-
-# declare subroutines
-#sub SplitFile($,$,$,$);
-#sub ReadSampleExpression($);
 
 
 my (%ens2hugo, %hugo2entrez);

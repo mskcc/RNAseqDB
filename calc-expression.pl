@@ -266,8 +266,8 @@ sub Run_Star {
 
     return if (-e "Aligned.sortedByCoord.out.bam");
 
-    # STAR parameters: common
-    my $star_para_comm = "--genomeDir $index_star --readFilesIn $fastq1 $fastq2  --outSAMunmapped None --outFilterType BySJout --outSAMattributes NH HI AS NM MD    --outFilterMultimapNmax 20   --outFilterMismatchNmax 999  --outFilterMismatchNoverLmax 0.04   --alignIntronMin 20   --alignIntronMax 1000000   --alignMatesGapMax 1000000 --alignSJoverhangMin 8  --alignSJDBoverhangMin 1";
+    # STAR parameters: common (options used here are similar as https://github.com/ENCODE-DCC/long-rna-seq-pipeline/blob/master/dnanexus/align-star-pe/resources/usr/bin/lrna_align_star_pe.sh)
+    my $star_para_comm = "--genomeDir $index_star --readFilesIn $fastq1 $fastq2  --outFilterType BySJout --outSAMattributes NH HI AS NM MD  --outFilterMultimapNmax 20   --outFilterMismatchNmax 999  --outFilterMismatchNoverLmax 0.04   --alignIntronMin 20   --alignIntronMax 1000000   --alignMatesGapMax 1000000 --alignSJoverhangMin 8  --alignSJDBoverhangMin 1";
     
     my $read_fq_cmd = '';
     if ($fastq1 =~ /.bz2$/) {

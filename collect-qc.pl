@@ -20,8 +20,8 @@ push @usage, "Options:\n";
 push @usage, "  -h | --help         Display this information\n";
 push @usage, "  -c | --config       Configuration file\n";
 push @usage, "  -i | --input        Input directory\n";
-push @usage, "  -m | --mRIN         mRIN cutoff(normal:-0.033, tumor:-0.11)\n";
-push @usage, "  -r | --RsemCount    If specified, create a matrix of samples\n";
+push @usage, "  -m | --mRIN         mRIN cutoff(default: -0.11)\n";
+push @usage, "  -d | --dataMatrix   Type of data matrix: TPM, Count, fcount, FPKM\n";
 push @usage, "--------------------------------------------------------------\n\n";
 
 
@@ -40,11 +40,11 @@ my $out_matrix;
 
 GetOptions
 (
-    'h|help|?'      => \$help,
-    'c|config=s'    => \$config_file,
-    'i|input=s'     => \$input,
-    'm|mRIN=s'      => \$mRIN_score_cutoff,
-    'r|RsemCount=s' => \$out_matrix,
+    'h|help|?'       => \$help,
+    'c|config=s'     => \$config_file,
+    'i|input=s'      => \$input,
+    'm|mRIN=s'       => \$mRIN_score_cutoff,
+    'd|dataMatrix=s' => \$out_matrix,
 );
 
 if ($help) {
@@ -61,6 +61,15 @@ if ($input) {
 }else{
     print @usage;
     exit(0);
+}
+
+if (defined $out_matrix){
+    $out_matrix = uc($out_matrix);
+    if ($out_matrix ne "TPM" and $out_matrix ne 'FPKM' and $out_matrix ne 'COUNT' and $out_matrix ne 'FCOUNT'){
+        print "\nError: unknown data type for creating dataMatrix!\n";
+        print @usage;
+        exit;
+    }
 }
 
 ############################# Read configuration file ############################
@@ -281,21 +290,31 @@ $f_fh->close;
 (-e 'rseqc.geneBodyCoverage.curves.pdf')  or GetGeneBodyCov(1, 'rseqc.geneBodyCoverage.curves.pdf');
 
 if (defined $out_matrix){
-    
     ( @sample_list ) or die "ERROR: No file left after filtering\n";
-    
-    my $file_name = "../$sample_list[0]/Quant.genes.results";
-    ( -s $file_name ) or die "ERROR: file $file_name do not exist\n";
-    
-    my ($column, $idx) = (-1, 0);
-    map{ $idx++; $column = $idx if($_ eq "expected_count") }split(/\t/, `head $file_name | grep ^gene_id`);
-    ($column != -1) or die "Unknown file format: $file_name\n";
 
-    
-    if (scalar (@sample_list) <= 1) {
-        print "Warning: " . scalar (@sample_list) . " data file; skip creating data matrix\n";
-    }elsif( !-e $out_matrix ){
-        CreateDataMatrix(\@sample_list, $column, $out_matrix);
+    if ($out_matrix eq "FCOUNT"){
+        if (scalar (@sample_list) <= 1) {
+            print "Warning: " . scalar (@sample_list) . " data file; skip creating data matrix\n";
+        }elsif( !-e 'data-matrix.txt.gz' ){
+            CreateDataMatrix(\@sample_list, 'fcounts.count', 2, 'data-matrix.txt');
+            `gzip 'data-matrix.txt'`;
+        }
+    }else{
+        $out_matrix = 'expected_count' if ($out_matrix ne "TPM" and $out_matrix ne 'FPKM');
+        my $file_name = "../$sample_list[0]/Quant.genes.results";
+        ( -s $file_name ) or die "ERROR: file $file_name do not exist\n";
+        
+        my ($column, $idx) = (-1, 0);
+        map{ $idx++; $column = $idx if($_ eq $out_matrix) }split(/\t/, `head $file_name | grep ^gene_id`);
+        ($column != -1) or die "Unknown file format: $file_name\n";
+        
+        
+        if (scalar (@sample_list) <= 1) {
+            print "Warning: " . scalar (@sample_list) . " data file; skip creating data matrix\n";
+        }elsif( !-e 'data-matrix.txt.gz' ){
+            CreateDataMatrix(\@sample_list, 'Quant.genes.results', $column, 'data-matrix.txt');
+            `gzip 'data-matrix.txt'`;
+        }
     }
 }
 
@@ -521,6 +540,7 @@ sub FeatureCountsStat {
 
 sub CreateDataMatrix {
     my $file_list  = shift;
+    my $quant_file = shift;
     my $column     = shift;
     my $out_file   = shift;
     
@@ -533,9 +553,13 @@ sub CreateDataMatrix {
     # Create data matrix
     my (@samples, %data_matrix, %gene_list);
     foreach my $file (@{$file_list}){
-        next if (!-s "../$file/Quant.genes.results");
+        next if (!-s "../$file/$quant_file");
         push @samples, $file;
-        map{ chomp; my @e=split(/\t/); $data_matrix{$file}{$e[0]}=$e[1]; $gene_list{$e[0]}++}`cut -f 1,$column ../$file/Quant.genes.results | tail -n +2`;
+        if ($quant_file eq 'fcounts.count'){
+            map{ chomp; my @e=split(/\t/); $data_matrix{$file}{$e[0]}=$e[1]; $gene_list{$e[0]}++}`cat ../$file/$quant_file`;
+        }else{
+            map{ chomp; my @e=split(/\t/); $data_matrix{$file}{$e[0]}=$e[1]; $gene_list{$e[0]}++}`cut -f 1,$column ../$file/$quant_file | tail -n +2`;
+        }
     }
     
     # Store the matrix
