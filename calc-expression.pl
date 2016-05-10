@@ -101,7 +101,7 @@ if (defined $fq1 and defined $fq2) {
         $new_fastq = 1;
     }
     
-    my @fqs = glob("*_?.fastq.gz");
+    my @fqs = glob("*.fastq.gz");
     
     # Perform alignment
     if ( scalar( @fqs ) > 1 and (!-e "Log.final.out" or !-e "Aligned.sortedByCoord.out.bam")){

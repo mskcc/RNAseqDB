@@ -10,7 +10,6 @@ use IO::File;
 use Cwd;
 use FindBin;
 use lib "$FindBin::Bin";
-use List::Util qw(min max);
 
 
 my @usage;
@@ -19,17 +18,18 @@ push @usage, "Options:\n";
 push @usage, "  -h | --help      Displays this information.\n";
 push @usage, "  -t | --tissue    Tissue type, e.g. bladder. User must provide this parameter\n";
 push @usage, "  -c | --config    A configuration file, default is config.txt in same dir of this script\n";
-push @usage, "  -s | --submit    Submit jobs for incomplete analysis if specified 'y[es]'; default: no\n\n";
+push @usage, "  -s | --submit    Submit jobs for incomplete analysis if specified\n\n";
 
 
-my ( $help, $tissue_type, $config_file, $submit );
+my ( $help, $tissue_type, $config_file );
+my $submit = 0;
 
 GetOptions
 (
- 'h|help|?'      => \$help,
- 'i|tissue=s'    => \$tissue_type,
- 'c|config=s'    => \$config_file,
- 's|submit=s'    => \$submit,
+ 'h|help|?'    => \$help,
+ 'i|tissue=s'  => \$tissue_type,
+ 'c|config=s'  => \$config_file,
+ 's|submit'    => \$submit,
 );
 
 if ( $help ) {
@@ -41,12 +41,6 @@ if( !defined $tissue_type ){
     print "ERROR: Please provide tissue type\n";
     print @usage;
     exit(-1);
-}
-
-if(defined $submit and (lc($submit) eq 'yes' or lc($submit) eq 'y')){
-    $submit = 'yes' ;
-}else{
-    $submit = 'no' ;
 }
 
 ######################### Read configuration file #################################
@@ -88,7 +82,7 @@ if (!-d $gtex_normal_path) {
             my $path = $_;
             $path =~ s/\.sra$//;
             my $sample_id = fileparse($path);
-            if ($sample_job_status{$sample_id} ne 'incomplete' or $submit eq 'no'){
+            if ( $sample_job_status{$sample_id} ne 'incomplete' or !$submit ){
                 $log_fh->print("$sample_id\t$sample_job_status{$sample_id}");
                 $log_fh->print("\tPossible RSEM failure") if(-e "$path/Quant.temp" and $sample_job_status{$sample_id} !~ /^[0-9]+$/);
                 $log_fh->print("\n");
@@ -100,7 +94,7 @@ if (!-d $gtex_normal_path) {
             }
         }
         $log_fh->close();
-        if($submit eq 'yes'){
+        if( $submit ){
             map{chomp; my @f=split(/\t/,$_); $job_ids{$f[1]}="$gtex_normal_path/$f[0]"}`grep -v \047done\|incomplete\047 $gtex_normal_path/$log_file`;
         }
     }
@@ -130,7 +124,7 @@ if (!-d $tcga_normal_path) {
             my ($name, $path) = fileparse($_);
             chop $path;
             my $sample_id = fileparse($path);
-            if ($sample_job_status{$sample_id} ne 'incomplete' or $submit eq 'no'){
+            if ( $sample_job_status{$sample_id} ne 'incomplete' or !$submit ){
                 $log_fh->print("$sample_id\t$sample_job_status{$sample_id}");
                 $log_fh->print("\tPossible RSEM failure") if(-e "$path/Quant.temp" and $sample_job_status{$sample_id} !~ /^[0-9]+$/);
                 $log_fh->print("\n");
@@ -142,7 +136,7 @@ if (!-d $tcga_normal_path) {
             }
         }
         $log_fh->close();
-        if($submit eq 'yes'){
+        if( $submit ){
             map{chomp; my @f=split(/\t/,$_); $job_ids{$f[1]}="$tcga_normal_path/$f[0]"}`grep -v \047done\|incomplete\047 $tcga_normal_path/$log_file`;
         }
     }
@@ -172,7 +166,7 @@ if (!-d $tcga_tumor_path) {
             my ($name, $path) = fileparse($_);
             chop $path;
             my $sample_id = fileparse($path);
-            if ($sample_job_status{$sample_id} ne 'incomplete' or $submit eq 'no'){
+            if ( $sample_job_status{$sample_id} ne 'incomplete' or !$submit ){
                 $log_fh->print("$sample_id\t$sample_job_status{$sample_id}");
                 $log_fh->print("\tPossible RSEM failure") if(-e "$path/Quant.temp" and $sample_job_status{$sample_id} !~ /^[0-9]+$/);
                 $log_fh->print("\n");
@@ -184,7 +178,7 @@ if (!-d $tcga_tumor_path) {
             }
         }
         $log_fh->close();
-        if($submit eq 'yes'){
+        if( $submit ){
             map{chomp; my @f=split(/\t/,$_); $job_ids{$f[1]}="$tcga_tumor_path/$f[0]"}`grep -v \047done\|incomplete\047 $tcga_tumor_path/$log_file`;
         }
     }
@@ -194,7 +188,7 @@ if (!-d $tcga_tumor_path) {
 ######################### Wait for qsub jobs to finish #################################
 
 
-if ($submit eq 'yes' and  scalar(keys %job_ids) > 0){
+if ($submit and  scalar(keys %job_ids) > 0){
     print "Waiting for jobs to terminate...\n";
     foreach my $job_id ( keys %job_ids ){
         my %job_list;
@@ -219,10 +213,8 @@ my %job_list = GetClusterJobs();
 
 # Process GTEx normals
 my ($gtex_qc, $batch_correction) = (1,1);
-if (-s "$gtex_normal_path/$log_file" and scalar(keys %job_list)>0 ){
-    my @lines = `grep -v done $gtex_normal_path/$log_file`;
-    $gtex_qc=0 if(@lines and scalar (@lines) > 0);
-}
+$gtex_qc = 0 if (-s "$gtex_normal_path/$log_file" and HasJobsRunning("$gtex_normal_path/$log_file") );
+
 if(!-s "$gtex_normal_path/SraRunTable.txt"){
     print "Warning: File $gtex_normal_path/SraRunTable.txt does not exist\n";
     $gtex_qc=0;
@@ -248,10 +240,8 @@ if($gtex_qc){
 
 # Process TCGA normals
 my $tcga_qc = 1;
-if (-s "$tcga_normal_path/$log_file" and scalar(keys %job_list)>0 ){
-    my @lines = `grep -v done $tcga_normal_path/$log_file`;
-    $tcga_qc=0 if(@lines and scalar (@lines) > 0);
-}
+$tcga_qc = 0 if (-s "$tcga_normal_path/$log_file" and HasJobsRunning("$tcga_normal_path/$log_file") );
+
 if(!-s "$tcga_normal_path/summary.tsv"){
     print "Warning: File $tcga_normal_path/summary.tsv does not exist\n";
     $tcga_qc=0;
@@ -277,10 +267,8 @@ if($tcga_qc){
 
 # Process TCGA tumors
 my $tcga_t_qc = 1;
-if (-s "$tcga_tumor_path/$log_file" and scalar(keys %job_list)>0 ){
-    my @lines = `grep -v done $tcga_tumor_path/$log_file`;
-    $tcga_t_qc=0 if(@lines and scalar (@lines) > 0);
-}
+$tcga_t_qc = 0 if (-s "$tcga_tumor_path/$log_file" and HasJobsRunning("$tcga_tumor_path/$log_file")  );
+
 if(!-s "$tcga_tumor_path/summary.tsv"){
     print "Warning: File $tcga_tumor_path/summary.tsv does not exist\n";
     $tcga_t_qc=0;
@@ -309,9 +297,9 @@ if($tcga_t_qc){
 
 if($batch_correction){
     print "Correcting batch bias...\n\n";
-    `perl $FindBin::Bin/run-combat.pl -t $tissue_type -n rsem`;
-    `perl $FindBin::Bin/run-combat.pl -t $tissue_type -n tpm`;
-    `perl $FindBin::Bin/run-combat.pl -t $tissue_type -n count`;
+    `perl $FindBin::Bin/run-combat.pl -t $tissue_type -u fpkm -r`;
+    `perl $FindBin::Bin/run-combat.pl -t $tissue_type -u tpm  -r`;
+    `perl $FindBin::Bin/run-combat.pl -t $tissue_type -u count`;
 }else{
     print "Skip batch bias correction...\n";
 }
@@ -327,6 +315,13 @@ sub GetClusterJobs {
     return %job_list;
 }
 
+sub HasJobsRunning {
+    return 0 if (scalar(keys %job_list) == 0);
+    
+    my $log_file = shift;
+    map{ chomp; return 1 if (defined $job_list{$_}) }`cut -f 2 $log_file`;
+    return 0;
+}
 
 sub ReadSampleStatus{
     my $samples = shift;

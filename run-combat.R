@@ -129,35 +129,24 @@ args <- commandArgs( trailingOnly = TRUE )
 inFile <- args[1]
 outPrefix <- args[2]
 
-mydata <- read.table(inFile,row.names=1, header=TRUE, sep="\t", strip.white=TRUE)
+mydata <- read.table(inFile, row.names=1, header=TRUE, sep="\t", strip.white=TRUE)
+
+batch_file = inFile;
+batch_file = gsub(".txt", "", batch_file, fixed=TRUE)
+batch_file = paste(batch_file,"-combat-batch.txt",sep="")
+if( !file.exists(batch_file) ){
+	print ("ERROR: Could not find combat-batch.txt file")
+	quit("yes")
+}
+
+#batch_conf <- read.table(batch_file, row.names=0, header=F, sep="\t", strip.white=TRUE)
+batch_conf <- read.delim(batch_file, header=F, sep="\t")
 
 # Create model to run ComBat
-idx.gtex   = grep("^GTEX",names(mydata))
-idx.tcga   = grep("^TCGA",names(mydata))
-idx.tumor  = grep(".01[A|B|C].", names(mydata))
-idx.tcga_t = intersect(idx.tumor, idx.tcga)
-
-if( file.exists('combat-batch.txt')){
-    batch <- read.table('combat-batch.txt',row.names=0, header=F, sep="\t", strip.white=TRUE)
-}else{
-    batch <- rep(2,length(names(mydata)))
-    batch[idx.gtex] = 1
-}
-
-if (length (idx.tcga_t) > 0 ){
-    cancer = rep('normal',length(names(mydata)))
-    cancer[idx.tcga_t] = 'tumor'
-    model = data.frame(batch, row.names=names(mydata))
-    modcombat = model.matrix(~cancer, data=model)
-}else{
-    model = data.frame(batch, row.names=names(mydata))
-    modcombat = model.matrix(~1, data=model)
-}
-
-#filtered <- ComBatWrapper(mydata, batch, modcombat, Iteration)
-#filename <- paste(outPrefix, '.png', sep = '');
-#png(filename)
-#combat_edata = ComBat(dat=filtered, batch=batch, mod=modcombat, par.prior=TRUE, prior.plots=TRUE)
+cancer = batch_conf[,1]
+batch = batch_conf[,2]
+model = data.frame(batch, row.names=names(mydata))
+modcombat = model.matrix(~cancer, data=model)
 
 combat_edata = ComBatWrapper(mydata, batch, modcombat, Iteration)
 

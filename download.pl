@@ -17,22 +17,23 @@ push @usage, "Options:\n";
 push @usage, "  -h | --help       Displays this information.\n";
 push @usage, "  -c | --config     A configuration file, default is config.txt in same dir of this script\n";
 push @usage, "  -f | --file       A cart file [for dbGaP data] or manifest.xml/urls.txt file [for CGHub]\n";
-push @usage, "  -s | --submit     Submit a job for data download if specified a value 'yes'; default: no\n";
+push @usage, "  -s | --submit     Submit a job to the cluster to download data if specified\n";
 push @usage, "  -d | --directory  A directory to store data. Working directory is used if not specified\n";
 push @usage, "  -o | --overwrite  Overwrite previous download by default or if specified 'yes'\n";
 push @usage, "Example:\n";
-push @usage, "  perl download.pl -f manifest.xml -s yes\n";
+push @usage, "  perl download.pl -f manifest.xml -s\n";
 push @usage, "  perl download.pl -f urls.txt\n\n";
 
 
-my ( $help, $config_file, $cart_file, $work_dir, $submit, $overwrite);
+my ( $help, $config_file, $cart_file, $work_dir, $overwrite);
+my $submit = 0;
 
 GetOptions
 (
 'h|help|?'      => \$help,
 'c|config=s'    => \$config_file,
 'f|file=s'      => \$cart_file,
-'s|submit=s'    => \$submit,
+'s|submit'      => \$submit,
 'd|directory=s' => \$work_dir,
 'o|overwrite=s' => \$overwrite,
 );
@@ -53,12 +54,6 @@ if (!defined $work_dir) {
 }else{
     ( -e $work_dir ) or die "ERROR: The directory $work_dir does not exist\n";
     $work_dir = abs_path($work_dir);
-}
-
-if(defined $submit and (lc($submit) eq 'yes' or lc($submit) eq 'y')){
-    $submit = 'yes' ;
-}else{
-    $submit = 'no' ;
 }
 
 if(defined $overwrite and (lc($overwrite) eq 'no' or lc($overwrite) eq 'n')){
@@ -89,7 +84,7 @@ chdir $work_dir;
 if ($gtex_path eq substr($work_dir, 0, $gtex_dir_len)) {
     
     my $cmd = "prefetch $cart_file";
-    if($submit eq 'yes'){
+    if( $submit ){
         my $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd\047 -m 10 -p 1 -t 48`;
         print "$cart_file\t$ret\n";
     }else{
@@ -133,7 +128,7 @@ if ($gtex_path eq substr($work_dir, 0, $gtex_dir_len)) {
     }else{
 
         my $cmd = "gtdownload -c ".$ENV{"HOME"}."/.ssh/cghub.key -d $cart_file";
-        if($submit eq 'yes'){
+        if( $submit ){
             my $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd\047 -m 10 -p 1 -t 48`;
             print "$cart_file\t$ret\n";
         }else{

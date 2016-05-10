@@ -144,6 +144,17 @@ if (-e "../summary.tsv"){
     }
 }
 
+# If neither GTEx nor TCGA
+if (0 == scalar keys %filtered_sample){
+    my @files = `find .. -name Log.final.out`;
+    foreach( @files ){
+        chomp;
+        s/\/Log.final.out//;
+        s/\.\.\///;
+        $filtered_sample{$_}=1;
+    }
+}
+
 # Filter GTEx data
 if ($gtex_path eq substr($work_dir, 0, $gtex_dir_len) or lc($work_dir) =~ /dbgap-8936/) {
     # Read GTEx sample attribute file
@@ -230,7 +241,7 @@ if (-e 'out.mRIN.txt'){
     print "\nDegraded samples:\n";
     my $mRIN_col_idx = -1;
     foreach (`cat out.mRIN.txt`){
-        if (/^Sample/){
+        if (/^Sample/ and /Pvalue$/){
             my $idx = 0;
             map{$mRIN_col_idx = $idx if($_ eq "mRIN"); $idx++}split(/\t/);
             ($mRIN_col_idx != -1) or die "Unknown file format: out.mRIN.txt\n";
@@ -286,8 +297,8 @@ $f_fh->close;
 
 
 # Calculate gene coverage
-(-e 'rseqc.geneBodyCoverage.curves2.pdf') or GetGeneBodyCov(0, 'rseqc.geneBodyCoverage.curves2.pdf');
-(-e 'rseqc.geneBodyCoverage.curves.pdf')  or GetGeneBodyCov(1, 'rseqc.geneBodyCoverage.curves.pdf');
+# (-e 'rseqc.geneBodyCoverage.curves2.pdf') or GetGeneBodyCov(0, 'rseqc.geneBodyCoverage.curves2.pdf');
+# (-e 'rseqc.geneBodyCoverage.curves.pdf')  or GetGeneBodyCov(1, 'rseqc.geneBodyCoverage.curves.pdf');
 
 if (defined $out_matrix){
     ( @sample_list ) or die "ERROR: No file left after filtering\n";
