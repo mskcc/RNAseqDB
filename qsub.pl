@@ -62,9 +62,14 @@ if ( !defined $thread_n ){
         $thread_n = 1;
     }
 }
-$memory     =  $config{ memory }     if ( !defined $memory );
-$wall_time  =  $config{ wall_time }  if ( !defined $wall_time );
-$cluster    =  $config{ cluster }    if ( exists $config{ cluster } );
+$memory    = $config{ memory }    if ( !defined $memory );
+$wall_time = $config{ wall_time } if ( !defined $wall_time );
+
+if ( exists $config{ cluster } ) {
+    $cluster = $config{ cluster }
+}else{
+    die "ERROR: variable 'cluster' is not defined in the configuration file\n";
+}
 
 ######################### Submit jobs to analyze samples #################################
 
