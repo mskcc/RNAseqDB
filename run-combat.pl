@@ -8,18 +8,18 @@ use Cwd;
 use FindBin;
 use lib "$FindBin::Bin";
 use IO::File;
-
+use File::Temp qw( tempdir );
 
 ######################### process input parameters #########################
 my @usage;
-push @usage, "\nUsage:  run-combat.pl -t tissueType [other options]\n\n";
+push @usage, "\nUsage:  post-process.pl -t tissueType [other options]\n\n";
 push @usage, "Options:\n";
-push @usage, "  -h, --help         Displays this information\n";
-push @usage, "  -t, --tissue       Input tissue type\n";
-push @usage, "  -c, --tissue-conf  Input tissue configuration file (default: path of script file)\n";
-push @usage, "  -r, --run-combat   Run combat to correct batch biases\n";
-push @usage, "  -q, --quan-tool    Expression quantification tool: RSEM (default) | FeatureCounts\n";
-push @usage, "  -u, --quan-unit    Unit to measure gene expression: TPM | Count | FPKM (default)\n\n";
+push @usage, "  -h | --help         Displays this information\n";
+push @usage, "  -t | --tissue       Input tissue type\n";
+push @usage, "  -c | --tissue-conf  Input tissue configuration file (default: path of script file)\n";
+push @usage, "  -r | --run-combat   Run combat to correct batch biases\n";
+push @usage, "  -q | --quan-tool    Expression quantification tool: RSEM (default) | FeatureCounts\n";
+push @usage, "  -u | --quan-unit    Unit to measure gene expression: TPM | Count | FPKM (default)\n\n";
 
 
 my ($help, $tissue, $tissue_conf, $quan_tool, $quan_unit);
@@ -93,7 +93,7 @@ $ensg_2_hugo_file =  $config{ ENSG_UCSC_common_genes };
 
 # Read tissue configuration file
 my @lines = `grep $tissue $tissue_conf`;
-(scalar @lines > 0) or die "ERROR: $tissue_conf is empty\n";
+(scalar @lines > 0) or die "ERROR: did not find $tissue in $tissue_conf\n";
 
 my $cluster = -1;
 foreach my $line (@lines){
@@ -112,6 +112,8 @@ my $flag = 0;
 my $prefix;
 foreach my $line (`grep -v ^# $tissue_conf`){
     chomp $line;
+    next if(!$line);
+    
     my @data = split(/\t/, $line);
     next if ($data[0] != $cluster);
     
@@ -148,12 +150,8 @@ my %finished_tissues;
 foreach my $line (@lines){
     my @data = split(/\t/, $line);
     
-    if (-e "$gtex_path/sra/$data[1]"){
-        if ( defined $finished_tissues{ "$gtex_path/sra/$data[1]" } ){
-            next;
-        }else{
-            $finished_tissues{ "$gtex_path/sra/$data[1]" } = 1;
-        }
+    if (-e "$gtex_path/sra/$data[1]" and !defined $finished_tissues{ "$gtex_path/sra/$data[1]" }){
+        $finished_tissues{ "$gtex_path/sra/$data[1]" } = 1;
         chdir "$gtex_path/sra";
         # Read GTEx normal samples
         my $n1 = scalar @samples;
@@ -165,12 +163,9 @@ foreach my $line (@lines){
         map{ $batch_str .= "normal\t$data[2]\n" }(1..$n2);
     }
     
-    if (-e "$tcga_path/$data[3]"){
-        if ( defined $finished_tissues{ "$tcga_path/$data[3]" } ){
-            next;
-        }else{
-            $finished_tissues{ "$tcga_path/$data[3]" } = 1;
-        }
+    if (-e "$tcga_path/$data[3]" and !defined $finished_tissues{ "$tcga_path/$data[3]" }){
+        $finished_tissues{ "$tcga_path/$data[3]" } = 1;
+
         chdir $tcga_path;
         # Read TCGA normal samples
         my $n1 = scalar @samples;
@@ -182,12 +177,9 @@ foreach my $line (@lines){
         map{ $batch_str .= "normal\t$data[4]\n" }(1..$n2);
     }
     
-    if (-e "$tcga_path/$data[3]-t"){
-        if ( defined $finished_tissues{ "$tcga_path/$data[3]-t" } ){
-            next;
-        }else{
-            $finished_tissues{ "$tcga_path/$data[3]-t" } = 1;
-        }
+    if (-e "$tcga_path/$data[3]-t" and !defined $finished_tissues{ "$tcga_path/$data[3]-t" }){
+        $finished_tissues{ "$tcga_path/$data[3]-t" } = 1;
+
         chdir $tcga_path;
         # Read TCGA tumor samples
         my $n1 = scalar @samples;
@@ -361,6 +353,7 @@ sub ReadSampleExpression() {
         die "ERROR: File SraRunTable.txt or summary.tsv do not exist\n";
     }
     
+    my $tmp_dir = tempdir( CLEANUP => 1 );
     #foreach(`find $tissue -name Quant.genes.results`){
     foreach my $line (`cut -f 1 $tissue/QC/filtered_samples.txt`){
         chomp $line;
@@ -382,19 +375,19 @@ sub ReadSampleExpression() {
                 my $idx = 0;
                 map{ $idx++; $column = $idx if($_ eq "FPKM") }split(/\t/, `head $quan_file | grep ^gene_id`);
                 ($column != -1) or die "Unknown file format: $quan_file\n";
-                `grep -v gene_id $quan_file | cut -f 1,$column > $tissue/$line/ubu-quan/temp0.txt`;
-                $quan_file = "$tissue/$line/ubu-quan/temp0.txt";
+                `grep -v gene_id $quan_file | cut -f 1,$column > $tmp_dir/temp0.txt`;
+                $quan_file = "$tmp_dir/temp0.txt";
             }
-            my $tmp_header = IO::File->new( "$tissue/$line/ubu-quan/temp1.txt", ">" ) or die "ERROR: Couldn't create file $tissue/$line/ubu-quan/temp1.txt\n";
+            my $tmp_header = IO::File->new( "$tmp_dir/temp1.txt", ">" ) or die "ERROR: Couldn't create file $tmp_dir/temp1.txt\n";
             foreach(`cat $quan_file`){
                 my @e=split(/\t/, $_);
                 next if(! exists $ens2hugo{$e[0]});
                 $tmp_header->print($_);
             }
             $tmp_header->close;
-            $quan_file = "$tissue/$line/ubu-quan/temp1.txt";
-            `perl $ubu_dir/perl/quartile_norm.pl -c 2 -q 75 -t 1000 -o $tissue/$line/ubu-quan/temp2.txt $quan_file`;
-            $quan_file = "$tissue/$line/ubu-quan/temp2.txt";
+            $quan_file = "$tmp_dir/temp1.txt";
+            `perl $ubu_dir/perl/quartile_norm.pl -c 2 -q 75 -t 1000 -o $tmp_dir/temp2.txt $quan_file`;
+            $quan_file = "$tmp_dir/temp2.txt";
         }
         
         my $barcode = $barcode_hash{$line};
@@ -413,7 +406,6 @@ sub ReadSampleExpression() {
             map{chomp; my @e=split(/\t/); $gene{$e[0]}=1; $expr{$line}{$e[0]}=$e[1];$n++}`cut -f 1,$column $quan_file | tail -n +2`;
         }else{
             map{chomp; my @e=split(/\t/); $gene{$e[0]}=1; $expr{$line}{$e[0]}=$e[1];$n++}`cat $quan_file`;
-            `rm $tissue/$line/ubu-quan/temp*.txt`;
         }
         print "$line\t$barcode($tissue)\t$n\n";
     }
