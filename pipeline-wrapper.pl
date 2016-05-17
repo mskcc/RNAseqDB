@@ -189,9 +189,9 @@ if($flag == 0){
     warn "Waring: Skip batch bias correction for lack of tissue with both GTEx and TCGA normals\n";
 }elsif($batch_correction){
     print "Correcting batch bias...\n\n";
-    `perl $FindBin::Bin/run-combat.pl -t $tissue -u fpkm -r`;
-    `perl $FindBin::Bin/run-combat.pl -t $tissue -u tpm  -r`;
-    `perl $FindBin::Bin/run-combat.pl -t $tissue -u count`;
+    `perl $FindBin::Bin/post-process.pl -t $tissue -u fpkm  -p -r`;
+    `perl $FindBin::Bin/post-process.pl -t $tissue -u tpm   -p -r`;
+    `perl $FindBin::Bin/post-process.pl -t $tissue -u count -p -r`;
 }else{
     print "Skip batch bias correction...\n";
 }

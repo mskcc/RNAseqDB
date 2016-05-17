@@ -153,6 +153,6 @@ combat_edata = ComBatWrapper(mydata, batch, modcombat, Iteration)
 #dev.off()
 
 filename <- paste(outPrefix, '.txt', sep = '');
-write.table(combat_edata, file=filename, row.names=TRUE, col.names=NA, quote=F, sep="\t")
+write.table(round(combat_edata, digits=2), file=filename, row.names=TRUE, col.names=NA, quote=F, sep="\t")
 
 
