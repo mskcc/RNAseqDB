@@ -1,11 +1,14 @@
 # Description:
 #  1. This file is used to match GTEx tissues with TCGA tissues.
-#  2. Tissues with same cluster number are processed in a single run by
-#     run-combat.pl, which calls ComBat for batch effect correction.
-#  3. Batch number is used directly by ComBat to fix biases between batches.
-#  4. Tissue directory names should be the same as the words in column 2/3. 
+#  2. Tissues in the same cluster are processed together using post-process.pl,
+#     which calls ComBat for batch effect correction.
+#  3. Batch numbers are used directly by ComBat to fix biases between batches.
+#  4. Tissue directory names match the texts in columns GTEx_Tissue/TCGA_Tissue. 
+#  5. If a cluster includes different tissues, specify each in the last column to
+#     preserve tissue infomation. If a tissue serves as control, then use 'control'
+#     as its tissue type so that tumors are not used in batch effect correction.
 #
-# Cluster	GTEx tissue	GTEx batch	TCGA tissue	TCGA batch
+#Cluster	GTEx_Tissue	GTEx_Batch	TCGA_Tissue	TCGA_Batch	Tissue_Type
 2	prostate	1	prad	2
 3	bladder	1	blca	2
 4	breast	1	brca	2
@@ -28,3 +31,12 @@
 13	uterus	1	ucs	2
 13	cervix	1	cesc	2
 14	salivary	1	hnsc	2
+15	testis	1	tgct	2	testis
+15	prostate	1	prad	2	control
+16	pancreas	1	paad	2	pancreas
+16	kidney	1	kirc	2	control
+16	kidney	1	kirp	2	control
+16	kidney	1	kich	2	control
+16	adrenal	1	acc	2	adrenal
+16	adrenal	1	pcpg	2	adrenal
+

@@ -145,9 +145,14 @@ batch_conf <- read.delim(batch_file, header=F, sep="\t")
 # Create model to run ComBat
 cancer = batch_conf[,1]
 batch = batch_conf[,2]
-model = data.frame(batch, row.names=names(mydata))
-modcombat = model.matrix(~cancer, data=model)
-
+if(ncol(batch_conf)==2){
+    model = data.frame(batch, row.names=names(mydata))
+    modcombat = model.matrix(~cancer, data=model)
+}else{
+    tissue = batch_conf[,3]
+    model = data.frame(batch, row.names=names(mydata))
+    modcombat = model.matrix(~cancer+tissue, data=model)
+}
 combat_edata = ComBatWrapper(mydata, batch, modcombat, Iteration)
 
 #dev.off()

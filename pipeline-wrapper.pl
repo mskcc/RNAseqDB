@@ -176,6 +176,9 @@ if (scalar @lines == 0){
             $finished_tissues{ "$tcga_path/$data[3]" } = 1;
             $batch_correction = $batch_correction and GetTCGAQC("$tcga_path/$data[3]");
         }
+        
+        next if (scalar @data == 6 and defined $data[5] and $data[5] eq 'control');
+        
         if (-e "$tcga_path/$data[3]-t" and !defined $finished_tissues{ "$tcga_path/$data[3]-t" }){
             $finished_tissues{ "$tcga_path/$data[3]-t" } = 1;
             $batch_correction = $batch_correction and GetTCGAQC("$tcga_path/$data[3]-t");

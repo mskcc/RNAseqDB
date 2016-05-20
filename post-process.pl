@@ -151,8 +151,10 @@ $data_matrix_fh->print("Gene");
 my %finished_tissues;
 foreach my $line (@lines){
     my @data = split(/\t/, $line);
+    my $tissue_type = '';
+    $tissue_type = "\t$data[5]" if (scalar @data == 6 and defined $data[5]);
     
-    if (-e "$gtex_path/sra/$data[1]" and !defined $finished_tissues{ "$gtex_path/sra/$data[1]" }){
+    if (-e "$gtex_path/sra/$data[1]" and !defined $finished_tissues{ "$gtex_path/sra/$data[1]" } and "$gtex_path/sra/$data[1]/SraRunTable.txt"){
         $finished_tissues{ "$gtex_path/sra/$data[1]" } = 1;
         chdir "$gtex_path/sra";
         # Read GTEx normal samples
@@ -162,10 +164,10 @@ foreach my $line (@lines){
         $col_ranges {"$data[1]-$quan_tool-$quan_unit-gtex.txt"} = ($n1+2).'-'.($n2+1);
         
         $n2 -= $n1;
-        map{ $batch_str .= "normal\t$data[2]\n" }(1..$n2);
+        map{ $batch_str .= "normal\t$data[2]$tissue_type\n" }(1..$n2);
     }
     
-    if (-e "$tcga_path/$data[3]" and !defined $finished_tissues{ "$tcga_path/$data[3]" }){
+    if (-e "$tcga_path/$data[3]" and !defined $finished_tissues{ "$tcga_path/$data[3]" } and -e "$tcga_path/$data[3]/summary.tsv"){
         $finished_tissues{ "$tcga_path/$data[3]" } = 1;
 
         chdir $tcga_path;
@@ -176,10 +178,12 @@ foreach my $line (@lines){
         $col_ranges {"$data[3]-$quan_tool-$quan_unit-tcga.txt"} = ($n1+2).'-'.($n2+1);
         
         $n2 -= $n1;
-        map{ $batch_str .= "normal\t$data[4]\n" }(1..$n2);
+        map{ $batch_str .= "normal\t$data[4]$tissue_type\n" }(1..$n2);
     }
     
-    if (-e "$tcga_path/$data[3]-t" and !defined $finished_tissues{ "$tcga_path/$data[3]-t" }){
+    next if( scalar @data == 6 and defined $data[5] and $data[5] eq 'control' );
+    
+    if (-e "$tcga_path/$data[3]-t" and !defined $finished_tissues{ "$tcga_path/$data[3]-t" } and -e "$tcga_path/$data[3]-t/summary.tsv"){
         $finished_tissues{ "$tcga_path/$data[3]-t" } = 1;
 
         chdir $tcga_path;
@@ -190,7 +194,7 @@ foreach my $line (@lines){
         $col_ranges {"$data[3]-$quan_tool-$quan_unit-tcga-t.txt"} = ($n1+2).'-'.($n2+1);
         
         $n2 -= $n1;
-        map{ $batch_str .= "tumor\t$data[4]\n" }(1..$n2);
+        map{ $batch_str .= "tumor\t$data[4]$tissue_type\n" }(1..$n2);
     }
 }
 
