@@ -2,15 +2,23 @@
 
 Background
 ----------
-GTEx is the largest study of RNA-seq healthy tissues. TCGA is the most comprehensive study of human cancer, providing a great number of normal and tumor RNA-seq samples. The level 3 data of the two studies are not directly comparable. To provide a reference for investigation of abnormal gene expressions in diseases, here we propose a pipeline to quantify RNA-seq gene expression and remove study-specific batch effects.
+A multitude of large-scale studies, e.g. TCGA and GTEx, have recently generated an unprecedented volume of RNA-seq data. The RNA-seq expression data from different studies typically are not directly comparable, due to differences in sample and data processing and other batch effects. Here, we developped a pipeline that processes and unifies RNA-seq data from different studies. Using the pipeline, we have processed data from the GTEx and TCGA and have successfully corrected for study-specific biases, allowing comparative analysis across studies. 
 
-Study design
+Methods
 ----------
-We collect RNA-seq of healthy human tissues from GTEx study, both tumors and normals from TCGA. Starting with raw reads downloaded from CGHub and dbGaP, we uniformly reanalyze the samples: calculating expression and removing study-specific biases.
+The input of the pipeline is raw sequencing reads (in FASTQ format). The raw reads of the RNA-seq samples for the TCGA and GTEx projects were retrieved from the Cancer Genomics Hub (CGHub, https://cghub.ucsc.edu) and the Database of Genotypes and Phenotypes (dbGaP, http://www.ncbi.nlm.nih.gov/gap), respectively.
+
+We used STAR to align sequencing reads, RSEM and FeatureCounts to quantify gene expression, mRIN to evaluate sample degradation, RSeQC
+to measure sample strandness and quality, and SVAseq to correct batch biases.  
+
+Comparing with other methods, e.g. Kallisto, our pipeline provides the following important functionality:
+ 1. It creates BAM files that are required by QC tools.
+ 2. It measures RNA-seq degradation and excludes degraded samples.
+ 3. It performs batch effect correction to make samples comparable accross studies.
 
 Related software
 ----------
-To run the pipeline, user needs to install the following third-party tools and related modules that they depend on:
+To run the pipeline, user needs to install the following third-party tools and related modules they require:
 
  STAR aligner v2.4.2a 
  
@@ -34,18 +42,7 @@ To run the pipeline, user needs to install the following third-party tools and r
 
  bedtools v2.23
 
-Finally, to be able to download FASTQ files from CGHub and dbGaP, user also needs tools [gtdownload]() and [sratoolkit]().
-
-Summary of pipeline
-----------
-We used STAR to align RNA-seq reads, RSEM and FeatureCounts to quantify gene expression, mRIN to evaluate sample degradation, RSeQC
-to measure sample strandness and quality, and SVAseq to correct batch biases.  
-
-Comparing with other methods, e.g. the latest Kallisto, our pipeline provides the following functionality that are important for RNA-seq analysis:
- 1. It creates BAM files that are required by QC tools.
- 2. It measures sample degradation and excludes degraded samples.
- 3. It performs batch effect correction to make samples comparable accross studies.
-
+Finally, to download FASTQ files from CGHub and dbGaP, user also needs to install tools [gtdownload]() and [sratoolkit]().
 
 Contact
 ----------
