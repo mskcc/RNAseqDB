@@ -18,7 +18,7 @@ Comparing with other methods, e.g. Kallisto, our pipeline provides the following
 
 Related software
 ----------
-To run the pipeline, user needs to install the following third-party tools and related modules they require:
+The pipeline requires the following third-party tools, which were already installed in the HAL and LUNA cluster (see the last section). So if you are a MSKCC user, probably you don't need install anything.
 
  STAR aligner v2.4.2a 
  
