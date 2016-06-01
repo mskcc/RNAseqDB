@@ -60,7 +60,7 @@ The pipeline was installed in the LUNA cluster (luna.cbio.mskcc.org) under the f
 
 /ifs/e63data/schultzlab/wangq/bin/RNAseqDB
 
-The following paths are needed to run RSeQC and gtdownload in LUNA. So it is better to add them into your file ~/.bashrc. 
+The following paths are needed to run [RSeQC]() and [gtdownload]() in LUNA. So it is better to add to your file ~/.bashrc. 
  1. export PATH=/opt/common/CentOS_6/python/python-2.7.8/bin/:$PATH
  2. export PYTHONPATH=/ifs/e63data/schultzlab/bin/RSeQC-2.6.1/opt/common/CentOS_6/python/python-2.7.8/lib/python2.7/site-packages:$PYTHONPATH
  3. export PATH=/ifs/e63data/schultzlab/bin/RSeQC-2.6.1/opt/common/CentOS_6/python/python-2.7.8/bin:$PATH
