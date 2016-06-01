@@ -182,11 +182,11 @@ sub ExtractFastQ {
         chdir $path;
         if (!-e "Aligned.sortedByCoord.out.bam"){
             #`java -jar -Xmx40g $picard_dir/picard.jar SamToFastq INPUT=$name FASTQ=read_1.fastq SECOND_END_FASTQ=read_2.fastq INCLUDE_NON_PF_READS=True VALIDATION_STRINGENCY=SILENT`;
-            `samtools view -b -U unpaired.bam -o paired.bam -\@ 3 -f 1 $name`;
-            `samtools sort -n -o namesort.bam -T namesort_pre -\@ 3 -m 3G -O bam paired.bam`;
+            `samtools view -b -o paired.bam -\@ $thread_n -f 1 $name`;
+            `samtools sort -n -o namesort.bam -T namesort_pre -\@ $thread_n -m 3G -O bam paired.bam`;
             `java -Xmx512M -jar $ubu_dir/ubu-1.2-jar-with-dependencies.jar sam2fastq --in namesort.bam --fastq1 read_1.fastq --fastq2 read_2.fastq --end1 /1 --end2 /2`;
             #`$bedtools_dir/bamToFastq -i namesort.bam -fq read_1.fastq -fq2 read_2.fastq`;
-            `rm unpaired.bam paired.bam namesort.bam` if(-s "read_1.fastq" and "read_2.fastq");
+            `rm paired.bam namesort.bam` if(-s "read_1.fastq" and "read_2.fastq");
         }
     }else{
         die "ERROR: unknow input data format!\n";

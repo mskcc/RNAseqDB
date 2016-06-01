@@ -6,8 +6,8 @@
 ##########################################
 ## Paths & meta data files
 ##########################################
-gtex_path 		= /home/wangq/projects/rna-seq-normal/gtex
-tcga_path 		= /home/wangq/projects/rna-seq-normal/tcga
+gtex_path 		= /ifs/e63data/schultzlab/wangq/rna-seq-normal/gtex
+tcga_path 		= /ifs/e63data/schultzlab/wangq/rna-seq-normal/tcga
 gtex_sample_attr	= phs000424.v5.pht002743.v5.p1.c1.GTEx_Sample_Attributes.GRU.txt
 
 ##########################################
@@ -19,13 +19,13 @@ bedtools_dir	= /opt/common/CentOS_6/bedtools/bedtools-2.22.0/bin
 rsem_dir	= /ifs/e63data/schultzlab/bin/rsem-1.2.20
 ubu_dir		= /ifs/e63data/schultzlab/bin/ubu-1.2/
 mapsplice_dir	= /opt/common/CentOS_6/mapsplice/MapSplice-v2.1.8/bin
-star_bin	= /home/wangq/bin/STAR-STAR_2.4.2a/bin/Linux_x86_64_static/STAR
+star_bin	= /ifs/e63data/schultzlab/wangq/bin/STAR-STAR_2.4.2a/bin/Linux_x86_64_static/STAR
 rseqc_dir	= /ifs/e63data/schultzlab/bin/RSeQC-2.6.1/opt/common/CentOS_6/python/python-2.7.8/bin
 sra_dir		= /ifs/e63data/schultzlab/bin/sratoolkit.2.5.2-centos_linux64/bin
 picard_dir   	= /opt/common/CentOS_6/picard/picard-tools-1.129
 tophat_dir   	= /opt/common/CentOS_6/tophat/tophat-2.0.13/bin
 kallisto	= /opt/common/CentOS_6/kallisto/kallisto_linux-v0.42.1/kallisto
-mRIN_dir	= /home/wangq/bin/mRIN
+mRIN_dir	= /ifs/e63data/schultzlab/wangq/bin/mRIN
 
 ##########################################
 ## Reference files indexed for aligners

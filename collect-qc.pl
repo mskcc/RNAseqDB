@@ -31,7 +31,7 @@ my $config_file;
 
 
 my $alignment_cutoff       = 40;    # Percentage of aligned reads
-my $assigned_reads_cutoff  = 0;     # Ratio of reads assigned by FeatureCount. 0 means keep all samples
+my $assigned_reads_cutoff  = 0.01;  # Ratio of reads assigned by FeatureCount. 0 means keep all samples
 my $mRIN_score_cutoff      = -0.11;
 my $out_matrix;
 
@@ -339,8 +339,15 @@ sub SummarizeMRIN {
         chomp $file;
         my @f  = split(/\//,$file);
         my $id = $f[1];
-        $r_fh->print( "$file\t$id\n" );
-        $n++;
+
+        my $line_n = `wc -l < $file`;
+        chomp $line_n;
+        if ($line_n <= 1){
+            print( "$id\t\tmRIN ERROR\n" );
+        }else{
+            $r_fh->print( "$file\t$id\n" );
+            $n++;
+        }
     }
     $r_fh->close;
     
@@ -525,6 +532,10 @@ sub FeatureCountsStat {
     my @files = `find .. -name fcounts.stat`;
     foreach( @files ){
         chomp;
+        my $line = $_;
+        $line =~ s/\/fcounts.stat/ /;
+        $line =~ s/\.\.\///;
+        
         my ($assigned, $ambiguity, $multimap, $noFeature, $total_reads) = (0,0,0,0,0);
         foreach(`cat $_`)
         {
@@ -536,14 +547,19 @@ sub FeatureCountsStat {
             $multimap  = $f[1] if($f[0] eq "Unassigned_MultiMapping");
             $noFeature = $f[1] if($f[0] eq "Unassigned_NoFeatures");
         }
-        $assigned  = sprintf("%.2f", $assigned  / $total_reads);
-        $ambiguity = sprintf("%.2f", $ambiguity / $total_reads);
-        $multimap  = sprintf("%.2f", $multimap  / $total_reads);
-        $noFeature = sprintf("%.2f", $noFeature / $total_reads);
+        if ( !defined $total_reads or $total_reads == 0 ){
+            print $line."\t\tLikely FeatureCounts failure\n";
+            $assigned  = sprintf("%.2f", 0);
+            $ambiguity = sprintf("%.2f", 0);
+            $multimap  = sprintf("%.2f", 0);
+            $noFeature = sprintf("%.2f", 0);
+        }else{
+            $assigned  = sprintf("%.2f", $assigned  / $total_reads);
+            $ambiguity = sprintf("%.2f", $ambiguity / $total_reads);
+            $multimap  = sprintf("%.2f", $multimap  / $total_reads);
+            $noFeature = sprintf("%.2f", $noFeature / $total_reads);
+        }
         
-        my $line = $_;
-        $line =~ s/\/fcounts.stat/ /;
-        $line =~ s/\.\.\///;
         `echo \'$line\t$assigned\t$ambiguity\t$multimap\t$noFeature\' >> fcount_sum.txt`;
     }
 }

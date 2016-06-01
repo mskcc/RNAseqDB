@@ -44,6 +44,26 @@ To run the pipeline, user needs to install the following third-party tools and r
 
 Finally, to download FASTQ files from CGHub and dbGaP, user also needs to install tools [gtdownload]() and [sratoolkit]().
 
+Summary of pipeline
+----------
+We used STAR to align RNA-seq reads, RSEM and FeatureCounts to quantify gene expression, mRIN to evaluate sample degradation, RSeQC
+to measure sample strandness and quality, and SVAseq to correct batch biases.  
+
+Comparing with other methods, e.g. the latest Kallisto, our pipeline provides the following functionality that are important for RNA-seq analysis:
+ 1. It creates BAM files that are required by QC tools.
+ 2. It measures sample degradation and excludes degraded samples.
+ 3. It performs batch effect correction to make samples comparable accross studies.
+
+Installation
+----------
+The pipeline was installed in the LUNA cluster under the following directory:
+
+/ifs/e63data/schultzlab/wangq/bin/RNAseqDB
+
+In the HAL cluster, it was installed under this directory: 
+
+/cbio/ski/schultz/home/wangq/scripts
+
 Contact
 ----------
 

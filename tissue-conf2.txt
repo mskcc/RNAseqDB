@@ -9,27 +9,12 @@
 #     as its tissue type so that tumors are not used in batch effect correction.
 #
 #Cluster	GTEx_Tissue	GTEx_Batch	TCGA_Tissue	TCGA_Batch	Tissue_Type
-2	prostate	1	prad	2
-3	bladder	1	blca	2
-4	breast	1	brca	2
-5	thyroid	1	thca	2
-6	stomach	1	stad	2
-7	lung	1	luad	2
-7	lung	1	lusc	2
-8	liver	1	lihc	2
-8	liver	1	chol	2
-9	kidney	1	kirc	2
-9	kidney	1	kirp	2
-9	kidney	1	kich	2
-10	pancreatic	1	paad	2
-11	colon	1	coad	2
-11	colon	1	read	2
-12	esophagus_gas	1	esca	2
-12	esophagus_muc	1	esca	2
-12	esophagus_mus	1	esca	2
-13	uterus	1	ucec	2
-13	uterus	1	ucs	2
-13	cervix	1	cesc	2
-14	salivary	1	hnsc	2
-
+15	testis	1	tgct	2	testis
+15	prostate	1	prad	2	control
+16	pancreas	1	paad	2	pancreas
+16	kidney	1	kirc	2	control
+16	kidney	1	kirp	2	control
+16	kidney	1	kich	2	control
+16	adrenal	1	acc	2	adrenal
+16	adrenal	1	pcpg	2	adrenal
 

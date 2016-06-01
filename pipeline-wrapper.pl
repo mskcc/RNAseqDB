@@ -192,9 +192,23 @@ if($flag == 0){
     warn "Waring: Skip batch bias correction for lack of tissue with both GTEx and TCGA normals\n";
 }elsif($batch_correction){
     print "Correcting batch bias...\n\n";
-    `perl $FindBin::Bin/post-process.pl -t $tissue -u fpkm  -p -r`;
-    `perl $FindBin::Bin/post-process.pl -t $tissue -u tpm   -p -r`;
-    `perl $FindBin::Bin/post-process.pl -t $tissue -u count -p -r`;
+    
+    my $cmd_fpkm  = "perl $FindBin::Bin/post-process.pl -t $tissue -c $tissue_conf -u fpkm  -p -r";
+    my $cmd_tpm   = "perl $FindBin::Bin/post-process.pl -t $tissue -c $tissue_conf -u tpm   -p -r";
+    my $cmd_count = "perl $FindBin::Bin/post-process.pl -t $tissue -c $tissue_conf -u count -p -r";
+    
+    if ($submit){
+        my $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd_fpkm\047 -p 1 -t 12`;
+        print $ret;
+        $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd_tpm\047 -p 1 -t 12`;
+        print $ret;
+        $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd_count\047 -p 1 -t 12`;
+        print $ret;
+    }else{
+        system($cmd_fpkm);
+        system($cmd_tpm);
+        system($cmd_count);
+    }
 }else{
     print "Skip batch bias correction...\n";
 }
@@ -373,6 +387,7 @@ sub ReadSampleStatus{
     if (-s "$study_path/$log_file"){
         foreach(`cat $study_path/$log_file`){
             chomp;
+            next if(!$_);
             my @data = split(/[\t ]+/, $_);
             if ($data[1] eq 'done' or exists $job_list{$data[1]}){
                 $sample_status{ $data[0] } = $data[1];
