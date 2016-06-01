@@ -67,7 +67,7 @@ The following paths are needed to run [RSeQC]() and [gtdownload]() in LUNA. So i
  4. export PATH=/ifs/e63data/schultzlab/wangq/bin/GeneTorrent-download-3.8.7-207/bin:$PATH
 
 
-In the HAL cluster [hal.cbio.mskcc.org](), it was installed under this directory: 
+In the HAL cluster [hal.cbio.mskcc.org](), the program was installed under this directory: 
 
 /cbio/ski/schultz/home/wangq/scripts
 
