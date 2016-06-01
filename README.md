@@ -56,15 +56,17 @@ Comparing with other methods, e.g. the latest Kallisto, our pipeline provides th
 
 Installation
 ----------
-The pipeline was installed in the LUNA cluster [luna.cbio.mskcc.org]() under the following directory:
+For MSKCC users, the complete pipeline was already installed in the Luna cluster [luna.cbio.mskcc.org]() under the following directory:
 
 /ifs/e63data/schultzlab/wangq/bin/RNAseqDB
 
-The following paths are needed to run [RSeQC]() and [gtdownload]() in LUNA. So it is better to add to your file ~/.bashrc. 
- 1. export PATH=/opt/common/CentOS_6/python/python-2.7.8/bin/:$PATH
- 2. export PYTHONPATH=/ifs/e63data/schultzlab/bin/RSeQC-2.6.1/opt/common/CentOS_6/python/python-2.7.8/lib/python2.7/site-packages:$PYTHONPATH
- 3. export PATH=/ifs/e63data/schultzlab/bin/RSeQC-2.6.1/opt/common/CentOS_6/python/python-2.7.8/bin:$PATH
- 4. export PATH=/ifs/e63data/schultzlab/wangq/bin/GeneTorrent-download-3.8.7-207/bin:$PATH
+Though not required to install anything, user at MSKCC need to specify RSeQC's path using the environment variables PATH and PYTHONPATH in bash. In addition, the paths of required Perl modules, e.g. czplib that is needed by mRIN, should be given in PERL5LIB. The following is a summary of the paths user can put into personal '.bashrc' file so as to run the pipeline in Luna. 
+ 1. export PERL5LIB=/ifs/e63data/schultzlab/wangq/perl5:/opt/common/CentOS_6/perl/perl-5.22.0/lib/5.22.0:/ifs/e63data/schultzlab/opt/perl5/lib/perl5:/ifs/e63data/schultzlab/opt/perl5/lib/perl5/czplib
+ 2. export PATH=/opt/common/CentOS_6-dev/perl/perl-5.22.0/bin:$PATH
+ 3. export PATH=/opt/common/CentOS_6/python/python-2.7.8/bin/:$PATH
+ 4. export PYTHONPATH=/ifs/e63data/schultzlab/bin/RSeQC-2.6.1/opt/common/CentOS_6/python/python-2.7.8/lib/python2.7/site-packages:$PYTHONPATH
+ 5. export PATH=/ifs/e63data/schultzlab/bin/RSeQC-2.6.1/opt/common/CentOS_6/python/python-2.7.8/bin:$PATH
+ 6. export PATH=/ifs/e63data/schultzlab/wangq/bin/GeneTorrent-download-3.8.7-207/bin:$PATH
 
 
 In the HAL cluster [hal.cbio.mskcc.org](), the program was installed under this directory: 
