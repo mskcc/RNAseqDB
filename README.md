@@ -60,7 +60,7 @@ For MSKCC users, the complete pipeline was already installed in the Luna cluster
 
 /ifs/e63data/schultzlab/wangq/bin/RNAseqDB
 
-Though not required to install anything, user at MSKCC need to specify RSeQC's path using the environment variables PATH and PYTHONPATH in bash. In addition, the paths of required Perl modules, e.g. czplib that is needed by mRIN, should be given in PERL5LIB. The following is a summary of the paths user can put into personal '.bashrc' file so as to run the pipeline in Luna. 
+Though not required to install anything, Luna user needs to specify RSeQC's path using the environment variables PATH and PYTHONPATH. In addition, the paths of the required Perl modules, e.g. czplib that is needed by mRIN, should be given in PERL5LIB. The following is a summary of the paths user can add into personal '.bashrc' file so as to run this pipeline in Luna. 
  1. export PERL5LIB=/ifs/e63data/schultzlab/wangq/perl5:/opt/common/CentOS_6/perl/perl-5.22.0/lib/5.22.0:/ifs/e63data/schultzlab/opt/perl5/lib/perl5:/ifs/e63data/schultzlab/opt/perl5/lib/perl5/czplib
  2. export PATH=/opt/common/CentOS_6-dev/perl/perl-5.22.0/bin:$PATH
  3. export PATH=/opt/common/CentOS_6/python/python-2.7.8/bin/:$PATH
