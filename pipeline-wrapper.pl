@@ -4,7 +4,7 @@
 use strict;
 use warnings FATAL => 'all';
 use Getopt::Std;
-use Getopt::Long;
+use Getopt::Long qw(:config no_ignore_case bundling);
 use File::Basename;
 use IO::File;
 use Cwd;
@@ -16,20 +16,22 @@ my @usage;
 push @usage, "\nUsage:  pipeline-wrapper.pl -t tissue [options]\n\n";
 push @usage, "Options:\n";
 push @usage, "  -h | --help         Displays this information.\n";
+push @usage, "  -c | --config       Configuration file (default: config.txt in the directory of the script\n";
 push @usage, "  -t | --tissue       Tissue type, e.g. bladder. User must provide this parameter\n";
-push @usage, "  -c | --tissue-conf  Input tissue configuration file (default: path of script file)\n";
-push @usage, "  -s | --submit       Submit jobs for incomplete analysis if specified\n\n";
+push @usage, "  -T | --tissue-conf  Input tissue configuration file (default: tissue-conf.txt)\n";
+push @usage, "  -s | --submit       Submit jobs for unprocessed samples or incomplete analysis\n\n";
 
 
-my ( $help, $tissue, $tissue_conf );
+my ( $config_file, $help, $tissue, $tissue_conf );
 my $submit = 0;
 
 GetOptions
 (
- 'h|help|?'    => \$help,
- 'i|tissue=s'  => \$tissue,
- 'c|config=s'  => \$tissue_conf,
- 's|submit'    => \$submit,
+ 'h|help|?'           => \$help,
+ 'c|config=s'         => \$config_file,
+ 't|tissue=s'         => \$tissue,
+ 'T|tissue-config=s'  => \$tissue_conf,
+ 's|submit'           => \$submit,
 );
 
 if ( $help ) {
@@ -52,7 +54,7 @@ if (!-e $tissue_conf){
 
 ######################### Read configuration file #################################
 
-my $config_file = "$FindBin::Bin/config.txt";
+(defined $config_file) or $config_file = "$FindBin::Bin/config.txt";
 ( -e $config_file ) or die "ERROR: The configuration file $config_file does not exist\n";
 
 # Read configuration file
@@ -230,7 +232,7 @@ sub GetGTExQC{
     }
     print "Collecting QC of GTEx normals...\n\n";
     (-d "$sample_path/QC") or `mkdir -p $sample_path/QC`;
-    `perl $FindBin::Bin/collect-qc.pl -i $sample_path > $sample_path/QC/qc_sum.txt`;
+    `perl $FindBin::Bin/collect-qc.pl -c $config_file -i $sample_path > $sample_path/QC/qc_sum.txt`;
     print "\nPlease check $sample_path/QC/qc_sum.txt for QC summary\n\n";
     my $m = `grep -v ^Assay_Type_s $sample_path/SraRunTable.txt | wc -l`;
     chomp $m;
@@ -256,7 +258,7 @@ sub GetTCGAQC{
     }
     print "Collecting QC for $sample_path...\n\n";
     (-d "$sample_path/QC") or `mkdir -p $sample_path/QC`;
-    `perl $FindBin::Bin/collect-qc.pl -i $sample_path > $sample_path/QC/qc_sum.txt`;
+    `perl $FindBin::Bin/collect-qc.pl -c $config_file -i $sample_path > $sample_path/QC/qc_sum.txt`;
     print "\nPlease check $sample_path/QC/qc_sum.txt for QC summary\n\n";
     my $m = `grep -v ^study $sample_path/summary.tsv | wc -l`;
     chomp $m;
@@ -288,7 +290,7 @@ sub SubmitGTExJobs{
                 $path =~ s/\.sra$//;
                 my $sample_id = fileparse($path);
                 if ( $sample_job_status{$sample_id} eq 'incomplete' and $submit ){
-                    my $cmd = "$FindBin::Bin/calc-expression.pl -i $_";
+                    my $cmd = "$FindBin::Bin/calc-expression.pl -c $config_file -i $_";
                     my $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd\047`;
                     print $ret;
                     $log_fh->print("$sample_id\t$ret");
@@ -334,7 +336,7 @@ sub SubmitTCGAJobs{
                 chop $path;
                 my $sample_id = fileparse($path);
                 if ( $sample_job_status{$sample_id} eq 'incomplete' and $submit ){
-                    my $cmd = "$FindBin::Bin/calc-expression.pl -i $_";
+                    my $cmd = "$FindBin::Bin/calc-expression.pl -c $config_file -i $_";
                     my $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd\047`;
                     print $ret;
                     $log_fh->print("$sample_id\t$ret");

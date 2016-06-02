@@ -21,8 +21,8 @@ my ( $config_file );
 GetOptions
 (
  'h|help|?'   => \$help,
- 'f|full'     => \$full_output,
  'c|config=s' => \$config_file,
+ 'f|full'     => \$full_output,
 );
 
 if ( $help ) {

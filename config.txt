@@ -1,6 +1,7 @@
 ##############################################
-## The code can run in both hal and luna. This
-## is the setting I am using to run in hal
+## The code can run in both hal and luna. These are the settings 
+## to run the pipeline in hal (Human genome as reference). Please 
+## don't use this configuration file for other species. 
 
 ##########################################
 ## Paths & meta data files
@@ -14,21 +15,13 @@ gtex_sample_attr	= phs000424.v5.pht002743.v5.p1.c1.GTEx_Sample_Attributes.GRU.tx
 ##########################################
 
 fastqc_bin     		= /cbio/ski/schultz/home/wangq/bin/FastQC/fastqc
-trimmomatic_dir		= /cbio/ski/schultz/home/wangq/bin/trimmomatic
-trimmomatic_jar		= /cbio/ski/schultz/home/wangq/bin/trimmomatic/trimmomatic.jar
 bedtools_dir		= /cbio/ski/schultz/home/wangq/bin/bedtools
-bowtie_dir      	= /cbio/ski/schultz/home/wangq/bin/bowtie2
-bowtie_bin      	= /cbio/ski/schultz/home/wangq/bin/bowtie2/bowtie2
-tophat_bin		= /cbio/ski/schultz/home/wangq/bin/tophat/tophat
-tophat_dir   		= /cbio/ski/schultz/home/wangq/bin/tophat
 rsem_dir		= /cbio/ski/schultz/home/wangq/bin/rsem
 ubu_dir			= /cbio/ski/schultz/home/wangq/bin/ubu-1.2/
-mapsplice_dir		= /cbio/ski/schultz/home/wangq/bin/MapSplice-v2.1.9/bin
 star_bin		= /cbio/ski/schultz/home/wangq/bin/STAR-STAR_2.4.2a/bin/Linux_x86_64_static/STAR
 rseqc_dir		= /cbio/ski/schultz/home/wangq/bin/RSeQC-2.6.1/cbio/ski/schultz/share/bin/miniconda/bin/
 picard_dir   		= /cbio/ski/schultz/home/wangq/bin/picard
 sratool_dir		= /cbio/ski/schultz/home/wangq/bin/sratoolkit/bin
-kallisto		= /cbio/ski/schultz/home/wangq/bin/kallisto-0.42.2.1/bin/bin/kallisto
 mRIN_dir		= /cbio/ski/schultz/home/wangq/bin/mRIN
 
 ##########################################
@@ -37,7 +30,6 @@ mRIN_dir		= /cbio/ski/schultz/home/wangq/bin/mRIN
 
 ref_fasta		= /cbio/ski/schultz/home/wangq/ref/genome/hg19/hg19.fa
 gencode			= /cbio/ski/schultz/home/wangq/ref/transcript/gencode.v19/gencode.v19.annotation.gtf
-index_bt2_genome	= /cbio/ski/schultz/home/wangq/ref/genome/hg19/bowtie2/hg19
 index_rsem   		= /cbio/ski/schultz/home/wangq/ref/transcript/gencode.v19/rsem/hg19
 index_star		= /cbio/ski/schultz/home/wangq/ref/transcript/gencode.v19/star
 house_keeping_genes	= /cbio/ski/schultz/home/wangq/ref/transcript/gencode.v19/hg19.HouseKeeping-LongGenes.bed

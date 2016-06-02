@@ -15,7 +15,6 @@ my @usage;
 push @usage, "\nUsage:  download.pl <-f file> [options]\n\n";
 push @usage, "Options:\n";
 push @usage, "  -h | --help       Displays this information.\n";
-push @usage, "  -c | --config     A configuration file, default is config.txt in same dir of this script\n";
 push @usage, "  -f | --file       A cart file [for dbGaP data] or manifest.xml/urls.txt file [for CGHub]\n";
 push @usage, "  -d | --sample-id  Sample ID, i.e. analysis_id for TCGA data or SRA accession for GTEx\n";
 push @usage, "                    The sample ID must be included in the cart file\n";
@@ -24,13 +23,12 @@ push @usage, "Example:\n";
 push @usage, "  perl download.pl -f manifest.xml -s\n";
 
 
-my ( $help, $config_file, $cart_file, $sample_id );
+my ( $help, $cart_file, $sample_id );
 my ( $submit ) = 0;
 
 GetOptions
 (
 'h|help|?'      => \$help,
-'c|config=s'    => \$config_file,
 'f|file=s'      => \$cart_file,
 'd|sample-id=s' => \$sample_id,
 's|submit'      => \$submit,
