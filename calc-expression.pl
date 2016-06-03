@@ -79,7 +79,7 @@ if (defined $fq1 and defined $fq2) {
     
     # print "Running pipeline STAR+RSEM...\n";
     Run_Star($fq1, $fq2);
-    Run_RSEM();
+    Run_RSEM() if (defined $index_rsem);
 
     #print "Running pipeline Bowtie2+RSEM...\n";
     #Run_Bowtie_RSEM($file1, $file2) if(!-e "Aligned.toTranscriptome.out.bam");
@@ -112,7 +112,7 @@ if (defined $fq1 and defined $fq2) {
         
         `rm *_?.fastq.gz` if ($new_fastq and -s "Aligned.sortedByCoord.out.bam");
         
-        Run_RSEM();
+        Run_RSEM() if (defined $index_rsem);
         
         #print "Running pipeline Bowtie2+RSEM...\n";
         #Run_Bowtie_RSEM($fqs[0], $fqs[1]);
@@ -132,7 +132,9 @@ if(-e 'Log.final.out' and -e 'Aligned.out.bam' and !-e 'Aligned.sortedByCoord.ou
 
 (-e 'Log.final.out' and -e 'Aligned.sortedByCoord.out.bam') or die "ERROR: STAR aligner failed to align reads\n";
 
-(-e 'Quant.genes.results' and -e 'Quant.isoforms.results') or Run_RSEM(); #die "ERROR: Did not find RSEM output\n";
+if (defined $index_rsem){
+    (-e 'Quant.genes.results' and -e 'Quant.isoforms.results') or Run_RSEM(); #die "ERROR: Did not find RSEM output\n";
+}
 
 (-e 'fcounts.tpm' and -e 'fcounts.fpkm') or Run_FeatureCounts(); #die "ERROR: Did not find FeatureCounts output\n";
 
@@ -146,7 +148,7 @@ if( !-e 'Aligned.sortedByCoord.out.bam.bai' ){
 (-e 'ks/sample.ks.txt') or Run_mRIN('Aligned.sortedByCoord.out.bam');
 
 # Do not follow TCGA pipeline to normalize rsem output
-QuantileNorm('Quant.genes.results', -1, 'rsem.genes.normalized_results') if (!-s 'ubu-quan/rsem.genes.normalized_results');
+QuantileNorm('Quant.genes.results', -1, 'rsem.genes.normalized_results') if (defined $index_rsem and !-s 'ubu-quan/rsem.genes.normalized_results');
 
 QuantileNorm('fcounts.fpkm', 2, 'fcounts.fpkm.normalized_results') if (!-s 'ubu-quan/fcounts.fpkm.normalized_results');
 
@@ -157,7 +159,9 @@ QuantileNorm('fcounts.fpkm', 2, 'fcounts.fpkm.normalized_results') if (!-s 'ubu-
 #(-e 'PicardRNASeqMetrics.txt') or `java -Xmx2g -jar $picard_dir/picard.jar CollectRnaSeqMetrics REF_FLAT=$gencode.genePred INPUT=Aligned.sortedByCoord.out.bam OUTPUT=PicardRNASeqMetrics.txt CHART=PicardRNASeqMetrics.pdf STRAND_SPECIFICITY=NONE VALIDATION_STRINGENCY=LENIENT`;
 
 # Calculate gene coverage
-(-e 'rseqc.geneBodyCoverage.txt') or `geneBody_coverage.py -r $house_keeping_genes -i Aligned.sortedByCoord.out.bam -o rseqc`;
+if (defined $house_keeping_genes){
+    (-e 'rseqc.geneBodyCoverage.txt') or `geneBody_coverage.py -r $house_keeping_genes -i Aligned.sortedByCoord.out.bam -o rseqc`;
+}
 
 # Run FastQC
 (-e 'Aligned.sortedByCoord.out_fastqc') or `$fastqc_bin --extract Aligned.sortedByCoord.out.bam`;
