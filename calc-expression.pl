@@ -8,7 +8,6 @@ use File::Basename;
 use Cwd;
 use FindBin;
 use lib "$FindBin::Bin";
-use List::Util qw(min max);
 use Switch;
 
 my $rsem_rnd_seed = 12345;
@@ -73,9 +72,6 @@ $mRIN_dir           = $config{ mRIN_dir }            if ( exists $config{ mRIN_d
 
 if (defined $fq1 and defined $fq2) {
     (-e $fq1 and -e $fq2) or die "ERROR: $fq1 or $fq2 does not exist\n";
-    my ($file1, $path) = fileparse($fq1);
-    my $file2 = fileparse($fq2);
-    chdir $path;
     
     # print "Running pipeline STAR+RSEM...\n";
     Run_Star($fq1, $fq2);
@@ -100,16 +96,29 @@ if (defined $fq1 and defined $fq2) {
         ExtractFastQ($input);
         $new_fastq = 1;
     }
-    
-    my @fqs = glob("*.fastq.gz");
+
+    my @fqs;
+    @fqs = glob( "*.fastq.gz" );
+    @fqs = glob( "*.fastq" ) if (scalar @fqs == 0);
+    @fqs = glob( "*.fq.gz" ) if (scalar @fqs == 0);
+    @fqs = glob( "*.fq" )    if (scalar @fqs == 0);
     
     # Perform alignment
     if ( scalar( @fqs ) > 1 and (!-e "Log.final.out" or !-e "Aligned.sortedByCoord.out.bam")){
-        ( -e $fqs[0] and -e $fqs[1] ) or die "ERROR: $fqs[0] or $fqs[1] do not exist\n";
         
         # print "Running pipeline STAR+RSEM...\n";
-        Run_Star($fqs[0], $fqs[1]);
-        
+        if (!-e 'SampleSheet.csv'){
+            Run_Star($fqs[0], $fqs[1]);
+        }else{
+            my ($lane, $id);
+            ($lane, $id) = ParseSampleSheet("SampleSheet.csv");
+            my ($fq1, $fq2);
+            map{ $fq1=$_ if(/L0+1/ and /R1/); $fq2=$_ if(/L0+1/ and /R2/)}@fqs;
+            for (my $i=2; $i<=$lane; $i++){
+                map{ $fq1 .= ",$_" if(/L0+$i/ and /R1/); $fq2 .= ",$_" if(/L0+$i/ and /R2/) }@fqs;
+            }
+            Run_Star($fq1, $fq2);
+        }
         `rm *_?.fastq.gz` if ($new_fastq and -s "Aligned.sortedByCoord.out.bam");
         
         Run_RSEM() if (defined $index_rsem);
@@ -119,7 +128,24 @@ if (defined $fq1 and defined $fq2) {
         
         #print "Running kallisto...\n";
         #Run_kallisto($fqs[0], $fqs[1]);
-        
+    }
+}
+
+sub ParseSampleSheet {
+    my $sample_sheet = shift;
+    
+    my ($idx, $lane_idx, $sample_idx) = (0, -1, -1);
+    map{$lane_idx=$idx if($_ eq "Lane"); $sample_idx=$idx if($_ eq "SampleID"); $idx++}split(/\,/, `head -1 $sample_sheet`);
+    if ($lane_idx != -1 and $sample_idx != -1) {
+        my $lane = '';
+        my $sample_id = '';
+        my @data = split(/\,/, `tail -n +2 $sample_sheet`);
+        $lane = $data[$lane_idx] if (defined $data[$lane_idx]);
+        $sample_id=$data[$sample_idx]  if (defined $data[$sample_idx]);
+        return ($lane, $sample_id);
+    }else{
+        warn "ERROR Unknown file format: $sample_sheet\n";
+        return ('','');
     }
 }
 

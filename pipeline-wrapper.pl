@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Pipeline wrapper for analyzing RNA-seq of GTEx and TCGA
+# Pipeline for processing RNA-seq from multiple studies (currently GTEx and TCGA studies).
 
 use strict;
 use warnings FATAL => 'all';
