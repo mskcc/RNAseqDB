@@ -1,0 +1,55 @@
+##############################################
+## The code can run in both hal and luna. These are the settings 
+## to run the pipeline in luna (Human genome as reference). Please 
+## don't use this configuration file for other species. 
+
+##########################################
+## Paths & meta data files
+##########################################
+gtex_path 		= /ifs/e63data/schultzlab/wangq/rna-seq-normal/gtex
+tcga_path 		= /ifs/e63data/schultzlab/wangq/rna-seq-normal/tcga
+gtex_sample_attr	= phs000424.v5.pht002743.v5.p1.c1.GTEx_Sample_Attributes.GRU.txt
+
+##########################################
+## Third-party tools
+##########################################
+
+fastqc_bin     	= /ifs/e63data/schultzlab/bin/FastQC/fastqc
+trimmomatic_dir	= /ifs/e63data/schultzlab/bin/trimmomatic
+trimmomatic_jar	= /ifs/e63data/schultzlab/bin/trimmomatic/trimmomatic.jar
+bedtools_dir	= /opt/common/CentOS_6/bedtools/bedtools-2.22.0/bin
+rsem_dir	= /ifs/e63data/schultzlab/bin/rsem-1.2.20
+ubu_dir		= /ifs/e63data/schultzlab/bin/ubu-1.2/
+star_bin	= /ifs/e63data/schultzlab/wangq/bin/STAR-STAR_2.4.2a/bin/Linux_x86_64_static/STAR
+rseqc_dir	= /ifs/e63data/schultzlab/bin/RSeQC-2.6.1/opt/common/CentOS_6/python/python-2.7.8/bin
+picard_dir   	= /opt/common/CentOS_6/picard/picard-tools-1.129
+sratool_dir	= /ifs/e63data/schultzlab/bin/sratoolkit.2.5.2-centos_linux64/bin
+mRIN_dir	= /ifs/e63data/schultzlab/bin/mRIN
+
+##########################################
+## Reference files indexed for aligners
+##########################################
+
+# Mouse reference genome mm10
+#ref_fasta		= /ifs/depot/assemblies/M.musculus/mm10/mm10.fasta
+#gencode		= /ifs/depot/annotation/M.musculus/gencode/vM8/gencode.vM8.annotation.gtf 
+#index_star		= /ifs/depot/assemblies/M.musculus/mm10/index/star/2.4.1d/gencode/vM8/overhang49
+
+# Human and mouse hybrid genome
+ref_fasta		=  /ifs/depot/assemblies/hybrids/H.sapiens_M.musculus/hg19_mm10/hg19_mm10.fasta
+gencode			= /ifs/depot/assemblies/hybrids/H.sapiens_M.musculus/hg19_mm10/index/star/2.4.1d/gencode/v18/overhang74/gencode.v18.annotation.gtf
+index_star		= /ifs/depot/assemblies/hybrids/H.sapiens_M.musculus/hg19_mm10/index/star/2.4.1d/gencode/v18/overhang74
+
+# Other indices. Create them if you want to run RSEM or RSeqQC on mouse samples
+#index_rsem   		= /ifs/e63data/schultzlab/wangq/ref/hg19/rsem-index/hg19
+#house_keeping_genes	= /ifs/e63data/schultzlab/wangq/ref/hg19/hg19.HouseKeeping-LongGenes.bed
+#ENSG_UCSC_common_genes	= /ifs/e63data/schultzlab/wangq/ref/hg19/gencode.v19_ucsc.known.txt
+
+##########################################
+## Machine specific
+##########################################
+
+cluster                 = luna
+thread_no      		= 8
+memory                  = 40
+wall_time               = 40

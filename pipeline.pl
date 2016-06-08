@@ -8,28 +8,31 @@ use Getopt::Long;
 use File::Basename;
 use IO::File;
 use Cwd;
+use Cwd 'abs_path';
 use FindBin;
 use lib "$FindBin::Bin";
 
 
 my @usage;
-push @usage, "\nUsage:  pipeline-single-study.pl -d directory [options]\n\n";
+push @usage, "\nUsage:  pipeline.pl -d directory [options]\n\n";
 push @usage, "Options:\n";
-push @usage, "  -h | --help         Displays this information.\n";
-push @usage, "  -c | --config       Configuration file (default: config.txt in the directory of the script\n";
-push @usage, "  -i | --input-dir    Directory of input samples. User must provide this parameter\n";
-push @usage, "  -s | --submit       Submit jobs for unprocessed samples or incomplete analysis\n\n";
+push @usage, "  -h | --help              Displays this information.\n";
+push @usage, "  -c | --config            Configuration file (default: config.txt in the directory of the script\n";
+push @usage, "  -i | --input-dir         Directory of input samples. User must provide this parameter\n";
+push @usage, "  -s | --submit            Submit jobs for unprocessed samples or incomplete analysis\n";
+push @usage, "  -m | --merge-replicates  Merge all replicates of a sample (default: don't merge)\n\n";
 
 
 my ( $config_file, $help, $sample_dir );
-my $submit = 0;
+my ( $submit, $mergeRep ) = (0, 0);
 
 GetOptions
 (
- 'h|help|?'       => \$help,
- 'c|config=s'     => \$config_file,
- 'i|input-dir=s'  => \$sample_dir,
- 's|submit'       => \$submit,
+ 'h|help|?'             => \$help,
+ 'c|config=s'           => \$config_file,
+ 'i|input-dir=s'        => \$sample_dir,
+ 's|submit'             => \$submit,
+ 'm|merge-replicates'   => \$mergeRep,
 );
 
 if ( $help ) {
@@ -63,7 +66,7 @@ $thread_n = $config{ thread_no }  if ( exists $config{ defined } );
 my $log_file = 'cluster-jobs.log';
 
 my @files;
-@files = glob( "$sample_dir/*/*.tar.gz" );
+@files = glob( "$sample_dir/*/UNCID*.tar.gz" );
 @files = glob( "$sample_dir/*/UNCID*.bam" ) if (scalar @files == 0);
 
 if (scalar @files > 0){
@@ -88,11 +91,15 @@ if (scalar @files > 0){
         }
     }
     $log_fh->close();
-}else{
+}else{                  # FastQ files
     foreach (glob( "$sample_dir/*" )){
         next if(!-d $_);
         my ($lane, $id);
-        ($lane, $id) = ParseSampleSheet("$_/SampleSheet.csv") if (-e "$_/SampleSheet.csv");
+        my @sampleSheet = glob( "$_/*SampleSheet.csv" );
+        if(scalar @sampleSheet > 0){
+            warn "Warning: More than 1 sample sheet under ".abs_path($_)."; only $sampleSheet[0] is used\n" if (scalar @sampleSheet > 1);
+            ($lane, $id) = ParseSampleSheet( $sampleSheet[0] );
+        }
         my @fastq_files;
         if (defined $id){
             @fastq_files = glob( "$_/*$id*fastq*" );
@@ -108,7 +115,7 @@ if (scalar @files > 0){
     
     my %sample_job_status;
     if(scalar @files > 0){
-        warn "Processing samples in $sample_dir\n\n";
+        warn "Processing samples in ".abs_path($sample_dir)."\n\n";
         %sample_job_status = ReadSampleStatus( \@files );
     }
     
@@ -118,10 +125,16 @@ if (scalar @files > 0){
         my ($sample_id, $path) = fileparse($_);
         chop $path;
         if ( $sample_job_status{$sample_id} eq 'incomplete' and $submit ){
-            my $cmd = "$FindBin::Bin/calc-expression.pl -c $config_file -i $_";
-            my $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd\047`;
-            print $ret;
-            $log_fh->print("$sample_id\t$ret");
+            my @reps = GetReplicates( $_, 1 );
+            if (scalar @reps > 0 and !$mergeRep){
+                `perl $FindBin::Bin/pipeline-1-study.pl -c $config_file -i $_ -s`;
+                $log_fh->print("$sample_id\tincomplete\n");
+            }else{
+                my $cmd = "$FindBin::Bin/calc-expression.pl -c $config_file -i $_";
+                my $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd\047`;
+                print $ret;
+                $log_fh->print("$sample_id\t$ret");
+            }
         }else{
             $log_fh->print("$sample_id\t$sample_job_status{$sample_id}");
             $log_fh->print("\tPossible RSEM failure") if(-e "$path/Quant.temp" and $sample_job_status{$sample_id} !~ /^[0-9]+$/);
@@ -131,6 +144,33 @@ if (scalar @files > 0){
     $log_fh->close();
 }
 
+sub GetReplicates {
+    $_ = shift;
+    my $split_rep = shift;
+    
+    my @sampleSheet = glob( "$_/*SampleSheet.csv" );
+    my ($lane, $id) = ParseSampleSheet( $sampleSheet[0] ) if(scalar @sampleSheet > 0);
+    if (!defined $id or !defined $lane){
+        return ();
+    }
+    
+    my @fastq_files = glob( "$_/*$id*fastq*" );
+    @fastq_files = glob( "$_/*$id*fq*" )  if (scalar @fastq_files == 0);
+    
+    my @reps = ();
+    for (my $i=1; $i<=$lane; $i++){
+        my ($fq1, $fq2);
+        foreach my $fq (@fastq_files) {
+            $fq1 = abs_path($fq) if($fq=~/L0+$i/ and $fq=~/R1/);
+            $fq2 = abs_path($fq) if($fq=~/L0+$i/ and $fq=~/R2/);
+        }
+        if(defined $fq1 and defined $fq2){
+            `mkdir -p $_/L$i; ln -s $fq1 $fq2 $_/L$i/ 2>/dev/null` if( $split_rep );
+            push @reps, "$_/L$i";
+        }
+    }
+    return @reps;
+}
 
 sub ParseSampleSheet {
     my $sample_sheet = shift;
@@ -138,15 +178,17 @@ sub ParseSampleSheet {
     my ($idx, $lane_idx, $sample_idx) = (0, -1, -1);
     map{$lane_idx=$idx if($_ eq "Lane"); $sample_idx=$idx if($_ eq "SampleID"); $idx++}split(/\,/, `head -1 $sample_sheet`);
     if ($lane_idx != -1 and $sample_idx != -1) {
-        my $lane = '';
-        my $sample_id = '';
-        my @data = split(/\,/, `tail -n +2 $sample_sheet`);
-        $lane = $data[$lane_idx] if (defined $data[$lane_idx]);
-        $sample_id=$data[$sample_idx]  if (defined $data[$sample_idx]);
+        my ($lane, $sample_id);
+        foreach(`tail -n +2 $sample_sheet`){
+            my @data = split(/\,/, $_);
+            if (defined $data[$lane_idx]){
+                $lane = $data[$lane_idx] if (!defined $lane or $lane < $data[$lane_idx]);
+            }
+            $sample_id=$data[$sample_idx]  if (defined $data[$sample_idx]);
+        }
         return ($lane, $sample_id);
     }else{
         warn "ERROR Unknown file format: $sample_sheet\n";
-        return ('','');
     }
 }
 
@@ -190,6 +232,16 @@ sub ReadSampleStatus{
                     $sample_status{ $data[0] } = 'done';
                 }else{
                     $sample_status{ $data[0] } = 'incomplete';
+                    next if ( $mergeRep );
+                    
+                    my @reps = GetReplicates( $path, 0 );
+                    if (scalar @reps > 0){
+                        my %rep_job_status = ReadSampleStatus (\@reps);
+                        $sample_status{ $data[0] } = 'done';
+                        foreach my $key (keys %rep_job_status){
+                            $sample_status{ $data[0] } = 'incomplete' if ($rep_job_status{ $key } ne "done");
+                        }
+                    }
                 }
             }
         }
@@ -217,6 +269,16 @@ sub ReadSampleStatus{
             $sample_status{ $sample_id } = 'done';
         }else{
             $sample_status{ $sample_id } = 'incomplete';
+            next if ( $mergeRep );
+            
+            my @reps = GetReplicates( $path, 0 );
+            if (scalar @reps > 0){
+                my %rep_job_status = ReadSampleStatus (\@reps);
+                $sample_status{ $sample_id } = 'done';
+                foreach my $key (keys %rep_job_status){
+                    $sample_status{ $sample_id } = 'incomplete' if ($rep_job_status{ $key } ne "done");
+                }
+            }
         }
     }
     return %sample_status;

@@ -107,17 +107,18 @@ if (defined $fq1 and defined $fq2) {
     if ( scalar( @fqs ) > 1 and (!-e "Log.final.out" or !-e "Aligned.sortedByCoord.out.bam")){
         
         # print "Running pipeline STAR+RSEM...\n";
-        if (!-e 'SampleSheet.csv'){
+        my @sampleSheet = glob( "*SampleSheet.csv" );
+        if (scalar @sampleSheet == 0){
             Run_Star($fqs[0], $fqs[1]);
         }else{
+            warn "Warning: More than 1 sample sheet; only $sampleSheet[0] is used\n" if (scalar @sampleSheet > 1);
             my ($lane, $id);
-            ($lane, $id) = ParseSampleSheet("SampleSheet.csv");
+            ($lane, $id) = ParseSampleSheet( $sampleSheet[0] );
             my ($fq1, $fq2);
-            map{ $fq1=$_ if(/L0+1/ and /R1/); $fq2=$_ if(/L0+1/ and /R2/)}@fqs;
-            for (my $i=2; $i<=$lane; $i++){
-                map{ $fq1 .= ",$_" if(/L0+$i/ and /R1/); $fq2 .= ",$_" if(/L0+$i/ and /R2/) }@fqs;
+            for (my $i=1; $i<=$lane; $i++){
+                map{ if(/L0+$i/ and /R1/){$fq1=(defined $fq1)?"$fq1,$_":$_}; if(/L0+$i/ and /R2/){$fq2=(defined $fq2)?"$fq2,$_":$_} }@fqs;
             }
-            Run_Star($fq1, $fq2);
+            Run_Star($fq1, $fq2) if (defined $fq1 and defined $fq2);
         }
         `rm *_?.fastq.gz` if ($new_fastq and -s "Aligned.sortedByCoord.out.bam");
         
@@ -137,15 +138,17 @@ sub ParseSampleSheet {
     my ($idx, $lane_idx, $sample_idx) = (0, -1, -1);
     map{$lane_idx=$idx if($_ eq "Lane"); $sample_idx=$idx if($_ eq "SampleID"); $idx++}split(/\,/, `head -1 $sample_sheet`);
     if ($lane_idx != -1 and $sample_idx != -1) {
-        my $lane = '';
-        my $sample_id = '';
-        my @data = split(/\,/, `tail -n +2 $sample_sheet`);
-        $lane = $data[$lane_idx] if (defined $data[$lane_idx]);
-        $sample_id=$data[$sample_idx]  if (defined $data[$sample_idx]);
+        my ($lane, $sample_id);
+        foreach(`tail -n +2 $sample_sheet`){
+            my @data = split(/\,/, $_);
+            if (defined $data[$lane_idx]){
+                $lane = $data[$lane_idx] if (!defined $lane or $lane < $data[$lane_idx]);
+            }
+            $sample_id=$data[$sample_idx]  if (defined $data[$sample_idx]);
+        }
         return ($lane, $sample_id);
     }else{
         warn "ERROR Unknown file format: $sample_sheet\n";
-        return ('','');
     }
 }
 
