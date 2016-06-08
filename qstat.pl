@@ -56,9 +56,9 @@ if(!defined $cluster){
 sub RunLunaQStat {
     my @jobs;
     if ($full_output){
-        @jobs = `bjobs`;
+        @jobs = `bjobs 2>/dev/null`;
     }else{
-        @jobs = `bjobs | grep -v JOBID | awk \047\{print \$1\}\047`;
+        @jobs = `bjobs 2>/dev/null | grep -v JOBID | awk \047\{print \$1\}\047`;
     }
     map{ print "$_" }@jobs;
 }

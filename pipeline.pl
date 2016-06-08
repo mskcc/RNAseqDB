@@ -127,7 +127,7 @@ if (scalar @files > 0){
         if ( $sample_job_status{$sample_id} eq 'incomplete' and $submit ){
             my @reps = GetReplicates( $_, 1 );
             if (scalar @reps > 0 and !$mergeRep){
-                `perl $FindBin::Bin/pipeline-1-study.pl -c $config_file -i $_ -s`;
+                `perl $FindBin::Bin/pipeline.pl -c $config_file -i $_ -s`;
                 $log_fh->print("$sample_id\tincomplete\n");
             }else{
                 my $cmd = "$FindBin::Bin/calc-expression.pl -c $config_file -i $_";
@@ -236,6 +236,9 @@ sub ReadSampleStatus{
                     
                     my @reps = GetReplicates( $path, 0 );
                     if (scalar @reps > 0){
+                        my $reps_exist = 1;
+                        map{ $reps_exist = 0 if(!-e $_) }@reps;
+                        next if (!$reps_exist);
                         my %rep_job_status = ReadSampleStatus (\@reps);
                         $sample_status{ $data[0] } = 'done';
                         foreach my $key (keys %rep_job_status){
@@ -273,6 +276,10 @@ sub ReadSampleStatus{
             
             my @reps = GetReplicates( $path, 0 );
             if (scalar @reps > 0){
+                my $reps_exist = 1;
+                map{ $reps_exist = 0 if(!-e $_) }@reps;
+                next if (!$reps_exist);
+
                 my %rep_job_status = ReadSampleStatus (\@reps);
                 $sample_status{ $sample_id } = 'done';
                 foreach my $key (keys %rep_job_status){
