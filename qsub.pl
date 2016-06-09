@@ -18,21 +18,25 @@ push @usage, "  -s | --command    Input command to be run in the cluster\n";
 push @usage, "  -m | --memory     Specifies memory [gb]; Will read configuration file if not specified\n";
 push @usage, "  -p | --cpu        Specifies number of CPUs; Will read configuration file if not specified\n";
 push @usage, "  -t | --time       Specifies time [hours]; Will read configuration file if not specified\n";
+push @usage, "  -e | --error      Appends the standard error output of the job to the specified file\n";
+push @usage, "  -o | --output     Appends the standard output of the job to the specified file\n";
 push @usage, "Example:\n";
 push @usage, "  perl qsub.pl -s 'perl ~/scripts/calc-expression.pl -i SRR1069166.sra'\n";
 push @usage, "  perl qsub.pl -s 'gtdownload -c ~/.ssh/cghub.key -d urls.txt' -m 10 -p 1 -t 48\n\n";
 
 
-my ( $help, $config_file, $input_cmd, $thread_n, $memory, $wall_time );
+my ( $help, $config_file, $input_cmd, $thread_n, $memory, $wall_time, $error_file, $output_file );
 
 GetOptions
 (
- 'h|help|?'      => \$help,
- 'c|config=s'    => \$config_file,
- 's|command=s'   => \$input_cmd,
- 'p|cpu=s'       => \$thread_n,
- 'm|memory=s'    => \$memory,
- 't|time=s'      => \$wall_time,
+ 'h|help|?'     => \$help,
+ 'c|config=s'   => \$config_file,
+ 's|command=s'  => \$input_cmd,
+ 'p|cpu=s'      => \$thread_n,
+ 'm|memory=s'   => \$memory,
+ 't|time=s'     => \$wall_time,
+ 'e|error=s'    => \$error_file,
+ 'o|output=s'   => \$output_file,
 );
 
 if ( $help ) {
@@ -86,7 +90,10 @@ if(!defined $cluster){
 
 
 sub RunLunaQsub {
-    my $ret = `bsub -We $wall_time:00 -n$thread_n -R \047span[hosts=1]\047 -R \047rusage[mem=$memory]\047 \047$input_cmd\047\n`;
+    my $err_log = '';
+    $err_log  = '-e '.$error_file   if( defined $error_file);
+    $err_log .= ' -o '.$output_file if( defined $output_file);
+    my $ret = `bsub -We $wall_time:00 -n$thread_n -R \047span[hosts=1]\047 -R \047rusage[mem=$memory]\047 $err_log \047$input_cmd\047\n`;
     $ret =~ m/([0-9]+)/;
     if (defined $1){
         print "$1\n";
@@ -96,9 +103,12 @@ sub RunLunaQsub {
 }
 
 sub RunHalQsub {
+    my $err_log = '';
+    $err_log  = '-e '.$error_file   if( defined $error_file);
+    $err_log .= ' -o '.$output_file if( defined $output_file);
     my $wor_dir = getcwd;
     my $mem = $memory.'G';
-    my $ret = `echo \"$input_cmd\" | qsub -V -q batch -d $wor_dir -l walltime=$wall_time:00:00,nodes=1:ppn=$thread_n,mem=$mem`;
+    my $ret = `echo \"$input_cmd\" | qsub -V -q batch -d $wor_dir $err_log -l walltime=$wall_time:00:00,nodes=1:ppn=$thread_n,mem=$mem`;
     $ret =~ m/([0-9]+)/;
     if (defined $1){
         print "$1\n";

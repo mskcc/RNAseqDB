@@ -107,6 +107,8 @@ if (scalar @lines == 0) {
 ######################### Submit jobs to analyze samples #################################
 
 my $log_file = 'cluster-jobs.log';
+my $err_file = 'cluster-jobs.err';
+my $out_file = 'cluster-jobs.out';
 my %job_ids;
 
 if (scalar @lines == 0){
@@ -200,11 +202,11 @@ if($flag == 0){
     my $cmd_count = "perl $FindBin::Bin/post-process.pl -t $tissue -c $tissue_conf -u count -p -r";
     
     if ($submit){
-        my $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd_fpkm\047 -p 1 -t 12`;
+        my $ret = `perl $FindBin::Bin/qsub.pl -o $out_file -e $err_file -s \047$cmd_fpkm\047 -p 1 -t 12`;
         print $ret;
-        $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd_tpm\047 -p 1 -t 12`;
+        $ret    = `perl $FindBin::Bin/qsub.pl -o $out_file -e $err_file -s \047$cmd_tpm\047  -p 1 -t 12`;
         print $ret;
-        $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd_count\047 -p 1 -t 12`;
+        $ret    = `perl $FindBin::Bin/qsub.pl -o $out_file -e $err_file -s \047$cmd_count\047 -p 1 -t 12`;
         print $ret;
     }else{
         system($cmd_fpkm);
@@ -291,7 +293,7 @@ sub SubmitGTExJobs{
                 my $sample_id = fileparse($path);
                 if ( $sample_job_status{$sample_id} eq 'incomplete' and $submit ){
                     my $cmd = "$FindBin::Bin/calc-expression.pl -c $config_file -i $_";
-                    my $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd\047`;
+                    my $ret = `perl $FindBin::Bin/qsub.pl -o $sample_path/$out_file -e $sample_path/$err_file -s \047$cmd\047`;
                     print $ret;
                     $log_fh->print("$sample_id\t$ret");
                 }else{
@@ -337,7 +339,7 @@ sub SubmitTCGAJobs{
                 my $sample_id = fileparse($path);
                 if ( $sample_job_status{$sample_id} eq 'incomplete' and $submit ){
                     my $cmd = "$FindBin::Bin/calc-expression.pl -c $config_file -i $_";
-                    my $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd\047`;
+                    my $ret = `perl $FindBin::Bin/qsub.pl -o $sample_path/$out_file -e $sample_path/$err_file -s \047$cmd\047`;
                     print $ret;
                     $log_fh->print("$sample_id\t$ret");
                 }else{

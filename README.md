@@ -18,7 +18,7 @@ Comparing with other methods, e.g. Kallisto, our pipeline provides the following
 
 Related software
 ----------
-The pipeline requires the following third-party tools, which were already installed in the HAL and LUNA cluster (see the last section). So if you are a MSKCC user, probably you don't need install anything.
+The pipeline requires the following third-party tools, which were already installed in the HAL and LUNA cluster (see the last section). So if you are a MSKCC user, probably you don't need install anything except R package Rsubread.
 
  STAR aligner v2.4.2a 
  

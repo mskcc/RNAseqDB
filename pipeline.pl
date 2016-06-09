@@ -64,6 +64,8 @@ $thread_n = $config{ thread_no }  if ( exists $config{ defined } );
 ######################### Submit jobs for each sample #################################
 
 my $log_file = 'cluster-jobs.log';
+my $err_file = 'cluster-jobs.err';
+my $out_file = 'cluster-jobs.out';
 
 my @files;
 @files = glob( "$sample_dir/*/UNCID*.tar.gz" );
@@ -81,7 +83,7 @@ if (scalar @files > 0){
         my $sample_id = fileparse($path);
         if ( $sample_job_status{$sample_id} eq 'incomplete' and $submit ){
             my $cmd = "$FindBin::Bin/calc-expression.pl -c $config_file -i $_";
-            my $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd\047`;
+            my $ret = `perl $FindBin::Bin/qsub.pl -o $sample_dir/$out_file -e $sample_dir/$err_file -s \047$cmd\047`;
             print $ret;
             $log_fh->print("$sample_id\t$ret");
         }else{
@@ -103,7 +105,7 @@ if (scalar @files > 0){
         my @fastq_files;
         if (defined $id){
             @fastq_files = glob( "$_/*$id*fastq*" );
-            @fastq_files = glob( "$_/*$id*fq*" )if (scalar @fastq_files == 0);
+            @fastq_files = glob( "$_/*$id*fq*" ) if (scalar @fastq_files == 0);
         }else{
             @fastq_files = glob( "$_/*.fastq.gz" );
             @fastq_files = glob( "$_/*.fastq" )  if (scalar @fastq_files == 0);
@@ -131,7 +133,7 @@ if (scalar @files > 0){
                 $log_fh->print("$sample_id\tincomplete\n");
             }else{
                 my $cmd = "$FindBin::Bin/calc-expression.pl -c $config_file -i $_";
-                my $ret = `perl $FindBin::Bin/qsub.pl -s \047$cmd\047`;
+                my $ret = `perl $FindBin::Bin/qsub.pl -o $sample_dir/$out_file -e $sample_dir/$err_file -s \047$cmd\047`;
                 print $ret;
                 $log_fh->print("$sample_id\t$ret");
             }
