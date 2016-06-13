@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# This script wraps HTC command qsub/bsub to provide an uniform interface to user
 
 use strict;
 use warnings FATAL => 'all';
@@ -75,7 +76,7 @@ if ( exists $config{ cluster } ) {
     die "ERROR: variable 'cluster' is not defined in the configuration file\n";
 }
 
-######################### Submit jobs to analyze samples #################################
+######################### Submit a job #################################
 
 
 if(!defined $cluster){

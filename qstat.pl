@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# This script wraps HTC command qsub/bsub to provide an uniform interface to user
 
 use strict;
 use warnings FATAL => 'all';

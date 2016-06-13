@@ -17,7 +17,8 @@ my %hugo2entrez = ();
 print "Reading file unc_knownToLocus.txt\n";
 map{chomp; my @cols=split(/\t/); my @f=split(/\|/, $cols[0]); $unc_gene{$f[0]}=$cols[1]; $hugo2entrez{$f[0]}=$f[1]}`cat unc_knownToLocus.txt`;
 
-#`awk '{if($3=="gene")print $10"\t"$18}' gencode.v19.annotation.gtf | sed 's/["|;]//g' > gencode.v19.gene.txt`
+#`awk '{if($3=="gene")print $10"\t"$18"\t"$14}' gencode.v19.annotation.gtf | sed 's/["|;]//g' > gencode.v19.gene.txt`
+#`awk '{if($3=="transcript")print $12"\t"$18"\t"$14}' gencode.v19.annotation.gtf | sed 's/["|;]//g' > gencode.v19.transcript.txt`
 
 # Find uniq mapping between ENSEMBL and UNC genes
 my %unc_2_ensg = ();

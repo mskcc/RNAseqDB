@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# This scripts summarize sample quality for a study
 
 use strict;
 use warnings FATAL => 'all';
@@ -21,7 +22,6 @@ push @usage, "  -h | --help         Display this information\n";
 push @usage, "  -c | --config       Configuration file\n";
 push @usage, "  -i | --input        Input directory\n";
 push @usage, "  -m | --mRIN         mRIN cutoff(default: -0.11)\n";
-push @usage, "  -d | --dataMatrix   Type of data matrix: TPM, Count, fcount, FPKM\n";
 push @usage, "--------------------------------------------------------------\n\n";
 
 
@@ -33,7 +33,6 @@ my $config_file;
 my $alignment_cutoff       = 40;    # Percentage of aligned reads
 my $assigned_reads_cutoff  = 0.01;  # Ratio of reads assigned by FeatureCount. 0 means keep all samples
 my $mRIN_score_cutoff      = -0.11;
-my $out_matrix;
 
 ############################## Input parameters ##############################
 # Read input parameters
@@ -44,7 +43,6 @@ GetOptions
     'c|config=s'     => \$config_file,
     'i|input=s'      => \$input,
     'm|mRIN=s'       => \$mRIN_score_cutoff,
-    'd|dataMatrix=s' => \$out_matrix,
 );
 
 if ($help) {
@@ -63,15 +61,6 @@ if ($input) {
     exit(0);
 }
 
-if (defined $out_matrix){
-    $out_matrix = uc($out_matrix);
-    if ($out_matrix ne "TPM" and $out_matrix ne 'FPKM' and $out_matrix ne 'COUNT' and $out_matrix ne 'FCOUNT'){
-        print "\nError: unknown data type for creating dataMatrix!\n";
-        print @usage;
-        exit;
-    }
-}
-
 ############################# Read configuration file ############################
 
 (defined $config_file) or $config_file = "$FindBin::Bin/config.txt";
@@ -80,13 +69,7 @@ my %config;
 map{ chomp; /^\s*([^=\s]+)\s*=\s*(.*)$/; $config{$1} = $2 if (defined $1 && defined $2) } `egrep -v \"^#\" $config_file`;
 
 # Use the configuration file to initialize variables
-my ( $thread_n, $rseqc_dir, $sra_dir, $fastqc_bin, $mRIN_dir, $gtex_path, $gtex_sample_attr, $ensg_2_hugo_file);
-
-$thread_n               = 1;
-$thread_n               = $config{ thread_no }              if ( exists $config{ thread_no  } );
-$rseqc_dir              = $config{ rseqc_dir }              if ( exists $config{ rseqc_dir } );
-$sra_dir                = $config{ sra_dir }                if ( exists $config{ sra_dir } );
-$fastqc_bin             = $config{ fastqc_bin };
+my ( $mRIN_dir, $gtex_path, $gtex_sample_attr, $ensg_2_hugo_file);
 $mRIN_dir               = $config{ mRIN_dir }               if ( exists $config{ mRIN_dir } );
 $gtex_path              = $config{ gtex_path }              if ( exists $config{ gtex_path } );
 $gtex_sample_attr       = $config{ gtex_sample_attr }       if ( exists $config{ gtex_sample_attr } );
@@ -300,34 +283,6 @@ $f_fh->close;
 # (-e 'rseqc.geneBodyCoverage.curves2.pdf') or GetGeneBodyCov(0, 'rseqc.geneBodyCoverage.curves2.pdf');
 # (-e 'rseqc.geneBodyCoverage.curves.pdf')  or GetGeneBodyCov(1, 'rseqc.geneBodyCoverage.curves.pdf');
 
-if (defined $out_matrix){
-    ( @sample_list ) or die "ERROR: No file left after filtering\n";
-
-    if ($out_matrix eq "FCOUNT"){
-        if (scalar (@sample_list) <= 1) {
-            print "Warning: " . scalar (@sample_list) . " data file; skip creating data matrix\n";
-        }elsif( !-e 'data-matrix.txt.gz' ){
-            CreateDataMatrix(\@sample_list, 'fcounts.count', 2, 'data-matrix.txt');
-            `gzip 'data-matrix.txt'`;
-        }
-    }else{
-        $out_matrix = 'expected_count' if ($out_matrix ne "TPM" and $out_matrix ne 'FPKM');
-        my $file_name = "../$sample_list[0]/Quant.genes.results";
-        ( -s $file_name ) or die "ERROR: file $file_name do not exist\n";
-        
-        my ($column, $idx) = (-1, 0);
-        map{ $idx++; $column = $idx if($_ eq $out_matrix) }split(/\t/, `head $file_name | grep ^gene_id`);
-        ($column != -1) or die "Unknown file format: $file_name\n";
-        
-        
-        if (scalar (@sample_list) <= 1) {
-            print "Warning: " . scalar (@sample_list) . " data file; skip creating data matrix\n";
-        }elsif( !-e 'data-matrix.txt.gz' ){
-            CreateDataMatrix(\@sample_list, 'Quant.genes.results', $column, 'data-matrix.txt');
-            `gzip 'data-matrix.txt'`;
-        }
-    }
-}
 
 sub SummarizeMRIN {
     
@@ -563,43 +518,3 @@ sub FeatureCountsStat {
         `echo \'$line\t$assigned\t$ambiguity\t$multimap\t$noFeature\' >> fcount_sum.txt`;
     }
 }
-
-
-sub CreateDataMatrix {
-    my $file_list  = shift;
-    my $quant_file = shift;
-    my $column     = shift;
-    my $out_file   = shift;
-    
-    print "\nCreate data matrix $out_file...\n\n";
-    
-    $ensg_2_hugo_file =~ s/_ucsc\.known/\.gene/;
-    my %ens2hugo;
-    map{chomp; my @f=split(/\t/); $ens2hugo{$f[0]}=$f[1]}`cat $ensg_2_hugo_file`;
-
-    # Create data matrix
-    my (@samples, %data_matrix, %gene_list);
-    foreach my $file (@{$file_list}){
-        next if (!-s "../$file/$quant_file");
-        push @samples, $file;
-        if ($quant_file eq 'fcounts.count'){
-            map{ chomp; my @e=split(/\t/); $data_matrix{$file}{$e[0]}=$e[1]; $gene_list{$e[0]}++}`cat ../$file/$quant_file`;
-        }else{
-            map{ chomp; my @e=split(/\t/); $data_matrix{$file}{$e[0]}=$e[1]; $gene_list{$e[0]}++}`cut -f 1,$column ../$file/$quant_file | tail -n +2`;
-        }
-    }
-    
-    # Store the matrix
-    my $r_fh = IO::File->new( $out_file, ">" ) or die "ERROR: Failed to creast file $out_file\n";
-    $r_fh->print( "Gene\tDescription\t". join("\t", map{exists $barcode_hash{$_} ? $barcode_hash{$_} : $_}@samples) . "\n" );
-    foreach my $gene (keys %gene_list){
-        $r_fh->print("$gene\t$ens2hugo{$gene}");
-        foreach my $sample ( @samples ){
-            my $expr = defined( $data_matrix{$sample}{$gene} ) ? $data_matrix{$sample}{$gene} : 0;
-            $r_fh->print( "\t$expr" );
-        }
-        $r_fh->print( "\n" );
-    }
-    $r_fh->close;
-}
-

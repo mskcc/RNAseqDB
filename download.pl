@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# This script wraps gtdownload and prefetch to provide user with an uniform interface to download data from CGHub/dbGaP
 
 use strict;
 use warnings FATAL => 'all';
@@ -56,24 +57,6 @@ if (defined $sample_id){
         ($sample_id =~ /.*-.*-/) or die "ERROR: Illegal TCGA analysis_id $sample_id\n";
     }
 }
-
-############################# Read configuration file ############################
-#
-#(defined $config_file) or $config_file = "$FindBin::Bin/config.txt";
-#( -e $config_file ) or die "ERROR: The configuration file $config_file does not exist\n";
-#my ( %config, $gtex_path, $tcga_path );
-#map{ chomp; /^\s*([^=\s]+)\s*=\s*(.*)$/; $config{$1} = $2 if (defined $1 and defined $2) } `egrep -v \"^#\" $config_file`;
-#$gtex_path  =  $config{ gtex_path };
-#$tcga_path  =  $config{ tcga_path };
-#
-#$gtex_path = abs_path($gtex_path);
-#$tcga_path = abs_path($tcga_path);
-#
-#my $gtex_dir_len = length($gtex_path);
-#my $tcga_dir_len = length($tcga_path);
-
-#my $work_dir = getcwd;
-#chdir $work_dir;
 
 ############################# Submit job to download data ############################
 
