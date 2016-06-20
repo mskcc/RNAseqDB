@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# The program creates data matrix and runs combat to remove batch effects
 
 use strict;
 use warnings FATAL => 'all';
@@ -12,29 +13,33 @@ use File::Temp qw( tempdir );
 
 ######################### process input parameters #########################
 my @usage;
-push @usage, "\nUsage:  post-process.pl -t tissueType [other options]\n\n";
+push @usage, "\nUsage:  post-process.pl -i tissueType [other options]\n\n";
 push @usage, "Options:\n";
 push @usage, "  -h | --help             Displays this information\n";
-push @usage, "  -t | --tissue           Input tissue type\n";
+push @usage, "  -i | --input-tissue     Input tissue type\n";
 push @usage, "  -c | --tissue-conf      Input tissue configuration file (default: path of script file)\n";
-push @usage, "  -q | --quan-tool        Expression quantification tool: RSEM (default) | FeatureCounts\n";
+push @usage, "  -t | --quan-tool        Expression quantification tool: RSEM (default) | FeatureCounts\n";
 push @usage, "  -u | --quan-unit        Unit to measure gene expression: TPM | Count | FPKM (default)\n";
-push @usage, "  -p | --protein-coding   Coping with protein coding genes only if specified\n\n";
-push @usage, "  -r | --run-combat       Run combat to correct batch biases\n";
+push @usage, "  -g | --transcript-type  Output data types: gene (default) | transcript\n";
+push @usage, "  -p | --protein-coding   Output protein-coding genes/transcripts only if specified\n";
+push @usage, "  -n | --hugo-gene-name   Output hugo gene names instead of ensembl gene ids\n";
+push @usage, "  -r | --run-combat       Run combat to correct batch biases\n\n";
 
 
-my ($help, $tissue, $tissue_conf, $quan_tool, $quan_unit);
-my ($run_combat, $protein_coding) = (0, 0);
+my ($help, $tissue, $tissue_conf, $quan_tool, $quan_unit, $gene_type);
+my ($protein_coding, $hugo_gene_name, $run_combat) = (0, 0, 0);
 
 GetOptions
 (
- 'h|help|?'         => \$help,
- 't|tissue=s'       => \$tissue,
- 'c|tissue-conf=s'  => \$tissue_conf,
- 'q|quan-tool=s'    => \$quan_tool,
- 'u|quan-unit=s'    => \$quan_unit,
- 'p|protein-coding' => \$protein_coding,
- 'r|run-combat'     => \$run_combat,
+ 'h|help|?'             => \$help,
+ 'i|input-tissue=s'     => \$tissue,
+ 'c|tissue-conf=s'      => \$tissue_conf,
+ 't|quan-tool=s'        => \$quan_tool,
+ 'u|quan-unit=s'        => \$quan_unit,
+ 'g|transcript-type=s'  => \$gene_type,
+ 'p|protein-coding'     => \$protein_coding,
+ 'n|hugo-gene-name'     => \$hugo_gene_name,
+ 'r|run-combat'         => \$run_combat,
 );
 
 if (!defined $tissue) {
@@ -61,6 +66,7 @@ if (!defined $quan_tool) {
     }
 }
 
+
 if (!defined $quan_unit) {
     $quan_unit = 'fpkm';
 }else{
@@ -68,8 +74,19 @@ if (!defined $quan_unit) {
     if ($quan_unit ne 'tpm' and $quan_unit ne 'count' and $quan_unit ne 'fpkm'){
         print "ERROR: Please specify one of TPM | Count | FPKM using -u\n";
         print @usage;
+        die;    }
+}
+
+if (defined $gene_type){
+    $gene_type = lc($gene_type);
+    ($gene_type eq 'transcript' or $gene_type eq 'gene') or die "ERROR: unknown transcript type\n";
+    if($gene_type eq 'transcript' and $quan_tool eq 'featurecounts'){
+        print "Warning: transcript result is not available for FeatureCounts\n";
+        print @usage;
         die;
     }
+}else{
+    $gene_type = 'gene';
 }
 
 if ($help) {
@@ -85,12 +102,11 @@ my $config_file = "$FindBin::Bin/config.txt";
 my %config;
 map{ chomp; /^\s*([^=\s]+)\s*=\s*(.*)$/; $config{$1} = $2 if (defined $1 && defined $2) } `egrep -v \"^#\" $config_file`;
 # Use configuration file to initialize variables
-my ($gtex_path, $tcga_path, $ubu_dir, $gtex_sample_attr, $ensg_2_hugo_file);
+my ($gtex_path, $tcga_path, $ubu_dir, $gene_name_file);
 $gtex_path        =  $config{ gtex_path };
 $tcga_path        =  $config{ tcga_path };
+$gene_name_file   =  $config{ ENSG_UCSC_common_genes };
 $ubu_dir          =  $config{ ubu_dir } if ( exists $config{ ubu_dir } );
-$gtex_sample_attr =  $config{ gtex_sample_attr };
-$ensg_2_hugo_file =  $config{ ENSG_UCSC_common_genes };
 
 
 # Read tissue configuration file
@@ -131,19 +147,33 @@ foreach my $line (`grep -v ^# $tissue_conf`){
 ($flag == 1) or die "ERROR: There should be >=1 tissue with both GTEx and TCGA normals\n";
 
 
-######################### Create data matrix #################################
-
-my $work_dir = getcwd;
-my (@samples, %expr, %gene, $data_matrix_fh);
+######################### Get genes of interest #################################
 
 my (%ens2hugo, %hugo2entrez);
-map{chomp; my @f=split(/\t/); $ens2hugo{$f[0]}=$f[1]; $hugo2entrez{$f[1]}=$f[2]}`cat $ensg_2_hugo_file`;
+if ($hugo_gene_name){
+    map{chomp; my @f=split(/\t/); $ens2hugo{$f[0]}=$f[1]; $hugo2entrez{$f[1]}=$f[2]}`cat $gene_name_file`;
+}else{
+    if ($gene_type eq 'transcript'){
+        $gene_name_file =~ s/_ucsc\.known/\.transcript/;
+    }else{
+        $gene_name_file =~ s/_ucsc\.known/\.gene/;
+    }
+    
+    if ( $protein_coding ){
+        map{chomp; my @f=split(/\t/); $ens2hugo{$f[0]}=$f[1]}`grep protein_coding $gene_name_file | cut -f 1-2`;
+    }else{
+        map{chomp; my @f=split(/\t/); $ens2hugo{$f[0]}=$f[1]}`cut -f 1-2 $gene_name_file`;
+    }
+}
+
+######################### Create data matrix #################################
 
 my $batch_str = '';
-my %col_ranges;
+my (%col_ranges, @samples, %expr, %gene);
 
+my $work_dir = getcwd;
 #if (!-e "$prefix.txt" or ($quan_unit ne "count" and !-s "$prefix.adjusted.txt")){
-$data_matrix_fh = IO::File->new( "$prefix.txt", ">" ) or die "ERROR: Couldn't create file $prefix.txt\n";
+my $data_matrix_fh = IO::File->new( "$prefix.txt", ">" ) or die "ERROR: Couldn't create file $prefix.txt\n";
 # Print header line
 # $data_matrix_fh->print("Gene\tDescription");
 $data_matrix_fh->print("Gene");
@@ -203,7 +233,7 @@ $data_matrix_fh->print("\n");
 
 # Write data matrix
 foreach my $g (sort {$gene{$a} <=> $gene{$b}} (keys %gene)){
-    if ($protein_coding){
+    if ( $hugo_gene_name ){
         next if(!exists $ens2hugo{$g});
         $data_matrix_fh->print( $ens2hugo{$g} );
     }else{
@@ -262,13 +292,17 @@ sub SplitFile() {
     #$head_str = join(/\t/, map{ s/.$tissue_name.//g; }split(/\t/, $head_str));
     
     my $file_handle = IO::File->new( $out_file_name, ">" ) or die "ERROR: Couldn't create file $out_file_name\n";
-    $file_handle->print( "Hugo_Symbol\tEntrez_Gene_Id\t$head_str\n");
+    if ( $hugo_gene_name ){
+        $file_handle->print( "Hugo_Symbol\tEntrez_Gene_Id\t$head_str\n");
+    }else{
+        $file_handle->print( "Gene_Id\tHugo_Symbol\t$head_str\n");
+    }
     
     #`tail -n +2 $in_file_name | cut -f $cols >> $out_file_name`;
     foreach(`tail -n +2 $in_file_name | cut -f 1,$cols`){
         chomp;
         my @F=split(/\t/);
-        if ($protein_coding){
+        if ( $hugo_gene_name ){
             $F[0] .= "\t".((defined $hugo2entrez{$F[0]}) ? $hugo2entrez{$F[0]} : 0);
         }else{
             $F[0] .= "\t".((defined $ens2hugo{$F[0]}) ? $ens2hugo{$F[0]} : '');
@@ -370,10 +404,6 @@ sub ReadSampleExpression() {
     #foreach(`find $tissue -name Quant.genes.results`){
     foreach my $line (`cut -f 1 $tissue/QC/filtered_samples.txt`){
         chomp $line;
-        if(!-s "$tissue/$line/fcounts.fpkm" or !-s "$tissue/$line/Quant.genes.results") {
-            print "Warning: Skip $line\n";
-            next;
-        }
 
         my $quan_file;
         if($quan_tool eq "rsem"){
@@ -382,20 +412,47 @@ sub ReadSampleExpression() {
             $quan_file = "$tissue/$line/fcounts.".$quan_unit;
         }
 
-        if($quan_unit eq 'fpkm'){
-            if(! $protein_coding){
-                if($quan_tool eq "rsem"){
-                    $quan_file = "$tissue/$line/ubu-quan/rsem.genes.normalized_results";
+        if(!-s $quan_file) {
+            print "Warning: Skip $line\n";
+            next;
+        }
+
+        if($quan_unit eq 'fpkm'){          # Do quantile normalization for fpkm
+            if ($gene_type eq 'gene'){ # gene expression
+                if( !$hugo_gene_name and !$protein_coding ){
+                    if($quan_tool eq "rsem"){
+                        $quan_file = "$tissue/$line/ubu-quan/rsem.genes.normalized_results";
+                    }else{
+                        $quan_file = "$tissue/$line/ubu-quan/fcounts.fpkm.normalized_results";
+                    }
                 }else{
-                    $quan_file = "$tissue/$line/ubu-quan/fcounts.fpkm.normalized_results";
+                    if($quan_tool eq "rsem"){
+                        my $column = -1;
+                        my $idx = 0;
+                        map{ $idx++; $column = $idx if($_ eq "FPKM") }split(/\t/, `head $quan_file | grep ^gene_id`);
+                        ($column != -1) or die "Unknown file format: $quan_file\n";
+                        `grep -v gene_id $quan_file | cut -f 1,$column > $tmp_dir/temp0.txt`;
+                        $quan_file = "$tmp_dir/temp0.txt";
+                    }
+                    my $tmp_header = IO::File->new( "$tmp_dir/temp1.txt", ">" ) or die "ERROR: Couldn't create file $tmp_dir/temp1.txt\n";
+                    foreach(`cat $quan_file`){
+                        my @e=split(/\t/, $_);
+                        next if(! exists $ens2hugo{$e[0]});
+                        $tmp_header->print($_);
+                    }
+                    $tmp_header->close;
+                    $quan_file = "$tmp_dir/temp1.txt";
+                    `perl $ubu_dir/perl/quartile_norm.pl -c 2 -q 75 -t 1000 -o $tmp_dir/temp2.txt $quan_file`;
+                    $quan_file = "$tmp_dir/temp2.txt";
                 }
-            }else{
+            }else{ # transcript expression
                 if($quan_tool eq "rsem"){
+                    $quan_file = "$tissue/$line/Quant.isoforms.results";
                     my $column = -1;
                     my $idx = 0;
-                    map{ $idx++; $column = $idx if($_ eq "FPKM") }split(/\t/, `head $quan_file | grep ^gene_id`);
+                    map{ $idx++; $column = $idx if($_ eq "FPKM") }split(/\t/, `head $quan_file | grep ^transcript_id`);
                     ($column != -1) or die "Unknown file format: $quan_file\n";
-                    `grep -v gene_id $quan_file | cut -f 1,$column > $tmp_dir/temp0.txt`;
+                    `grep -v transcript_id $quan_file | cut -f 1,$column > $tmp_dir/temp0.txt`;
                     $quan_file = "$tmp_dir/temp0.txt";
                 }
                 my $tmp_header = IO::File->new( "$tmp_dir/temp1.txt", ">" ) or die "ERROR: Couldn't create file $tmp_dir/temp1.txt\n";
@@ -406,7 +463,7 @@ sub ReadSampleExpression() {
                 }
                 $tmp_header->close;
                 $quan_file = "$tmp_dir/temp1.txt";
-                `perl $ubu_dir/perl/quartile_norm.pl -c 2 -q 75 -t 1000 -o $tmp_dir/temp2.txt $quan_file`;
+                `perl $ubu_dir/perl/quartile_norm.pl -c 2 -q 75 -t 300 -o $tmp_dir/temp2.txt $quan_file`;
                 $quan_file = "$tmp_dir/temp2.txt";
             }
         }
@@ -418,15 +475,20 @@ sub ReadSampleExpression() {
         
         my $n=0;
         if($quan_tool eq "rsem" and $quan_unit ne "fpkm"){
+            $quan_file = "$line/Quant.isoforms.results" if($gene_type eq "transcript");
             my $column = -1;
             my $idx = 0;
             my $col_name = "TPM";
             $col_name = "expected_count" if ($quan_unit eq "count");
-            map{ $idx++; $column = $idx if($_ eq $col_name) }split(/\t/, `head $quan_file | grep ^gene_id`);
+            if($gene_type eq "transcript"){
+                map{ $idx++; $column = $idx if($_ eq $col_name) }split(/\t/, `head $quan_file | grep ^transcript_id`);
+            }else{
+                map{ $idx++; $column = $idx if($_ eq $col_name) }split(/\t/, `head $quan_file | grep ^gene_id`);
+            }
             ($column != -1) or die "Unknown file format: $quan_file\n";
-            map{chomp; my @e=split(/\t/); $gene{$e[0]}=1; $expr{$line}{$e[0]}=$e[1];$n++}`cut -f 1,$column $quan_file | tail -n +2`;
+            map{chomp; my @e=split(/\t/); if(defined $ens2hugo{$e[0]}){$gene{$e[0]}=1; $expr{$line}{$e[0]}=$e[1];$n++}}`cut -f 1,$column $quan_file | tail -n +2`;
         }else{
-            map{chomp; my @e=split(/\t/); $gene{$e[0]}=1; $expr{$line}{$e[0]}=$e[1];$n++}`cat $quan_file`;
+            map{chomp; my @e=split(/\t/); if(defined $ens2hugo{$e[0]}){$gene{$e[0]}=1; $expr{$line}{$e[0]}=$e[1];$n++}}`cat $quan_file`;
         }
         print "$line\t$barcode($tissue)\t$n\n";
     }

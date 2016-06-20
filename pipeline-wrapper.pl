@@ -197,21 +197,21 @@ if($flag == 0){
 }elsif($batch_correction){
     print "Correcting batch bias...\n\n";
     
-    my $cmd_fpkm  = "perl $FindBin::Bin/post-process.pl -t $tissue -c $tissue_conf -u fpkm  -p -r";
-    my $cmd_tpm   = "perl $FindBin::Bin/post-process.pl -t $tissue -c $tissue_conf -u tpm   -p -r";
-    my $cmd_count = "perl $FindBin::Bin/post-process.pl -t $tissue -c $tissue_conf -u count -p -r";
+    my $cmd_fpkm  = "perl $FindBin::Bin/post-process.pl -i $tissue -c $tissue_conf -u fpkm  -p -r -n";
+    #my $cmd_tpm   = "perl $FindBin::Bin/post-process.pl -i $tissue -c $tissue_conf -u tpm   -p -r";
+    #my $cmd_count = "perl $FindBin::Bin/post-process.pl -i $tissue -c $tissue_conf -u count -p -r";
     
     if ($submit){
         my $ret = `perl $FindBin::Bin/qsub.pl -o $out_file -e $err_file -s \047$cmd_fpkm\047 -p 1 -t 12`;
         print $ret;
-        $ret    = `perl $FindBin::Bin/qsub.pl -o $out_file -e $err_file -s \047$cmd_tpm\047  -p 1 -t 12`;
-        print $ret;
-        $ret    = `perl $FindBin::Bin/qsub.pl -o $out_file -e $err_file -s \047$cmd_count\047 -p 1 -t 12`;
-        print $ret;
+        #$ret    = `perl $FindBin::Bin/qsub.pl -o $out_file -e $err_file -s \047$cmd_tpm\047  -p 1 -t 12`;
+        #print $ret;
+        #$ret    = `perl $FindBin::Bin/qsub.pl -o $out_file -e $err_file -s \047$cmd_count\047 -p 1 -t 12`;
+        #print $ret;
     }else{
         system($cmd_fpkm);
-        system($cmd_tpm);
-        system($cmd_count);
+        #system($cmd_tpm);
+        #system($cmd_count);
     }
 }else{
     print "Skip batch bias correction...\n";

@@ -2,64 +2,82 @@
 
 use strict;
 use warnings FATAL => 'all';
-use Getopt::Std;
-use Getopt::Long;
 use IO::File;
 
-(-e 'unc_hg19.gtf')               or die "ERROR: could not find file unc_hg19.gtf\n";
-(-e 'gencode.v19.annotation.gtf') or die "ERROR: could not find file gencode.v19.annotation.gtf\n";
-(-e 'unc_knownToLocus.txt')       or die "ERROR: could not find file unc_knownToLocus.txt\n";
+my $gencode_file = $ARGV[0];
 
+die "ERROR: Gencode file (GTF) not provided\n" if (!defined $gencode_file);
 
-# Read known genes used by UNC
-my %unc_gene = ();
-my %hugo2entrez = ();
-print "Reading file unc_knownToLocus.txt\n";
-map{chomp; my @cols=split(/\t/); my @f=split(/\|/, $cols[0]); $unc_gene{$f[0]}=$cols[1]; $hugo2entrez{$f[0]}=$f[1]}`cat unc_knownToLocus.txt`;
+# The following code was adapted from http://www.gencodegenes.org/gencodeformat.html
+my $gene_fh = IO::File->new( "gencode.v19.gene.txt", ">" ) or die "ERROR: Couldn't overwrite file gencode.v19.gene.txt\n";
+my $transcript_fh = IO::File->new( "gencode.v19.transcript.txt", ">" ) or die "ERROR: Couldn't overwrite file gencode.v19.transcript.txt\n";
 
-#`awk '{if($3=="gene")print $10"\t"$18"\t"$14}' gencode.v19.annotation.gtf | sed 's/["|;]//g' > gencode.v19.gene.txt`
-#`awk '{if($3=="transcript")print $12"\t"$18"\t"$14}' gencode.v19.annotation.gtf | sed 's/["|;]//g' > gencode.v19.transcript.txt`
-
-# Find uniq mapping between ENSEMBL and UNC genes
-my %unc_2_ensg = ();
-print "Processing file gencode.v19.gene.txt\n";
-foreach(`cat gencode.v19.gene.txt`){
+my %hugo_symbols;
+my @gene_names;
+open(IN, "<$gencode_file") or die "ERROR: Can't open $gencode_file.\n";
+while(<IN>){
+    next if(/^##/); #ignore header
     chomp;
-    my @fields=split(/\t/);
-    next if( !exists $unc_gene{$fields[1]} );
-    if ( !exists $unc_2_ensg{ $fields[1] } ){
-        $unc_2_ensg{ $fields[1] } = $fields[0];
-    }else{
-        my $ret = `grep '$unc_gene{$fields[1]}' unc_hg19.gtf`;
-        my @data = split(/\t/, $ret);
-        my ($chr, $pos) = ($data[0], $data[3]);
+    my %attribs = ();
+    my ($chr, $source, $type, $start, $end, $score, $strand, $phase, $attributes) = split("\t");
+    #store nine columns in hash
+    my %fields = (
+        chr        => $chr,
+        source     => $source,
+        type       => $type,
+        start      => $start,
+        end        => $end,
+        score      => $score,
+        strand     => $strand,
+        phase      => $phase,
+        attributes => $attributes,
+    );
+    
+    my @add_attributes = split(";", $attributes);
+    # store ids and additional information in second hash
+    foreach my $attr ( @add_attributes ) {
+        next unless $attr =~ /^\s*(.+)\s(.+)$/;
+        my $c_type  = $1;
+        my $c_value = $2;
+        $c_value =~ s/\"//g;
+        if($c_type && $c_value){
+            if(!exists($attribs{$c_type})){
+                $attribs{$c_type} = [];
+            }
+            $attribs{$c_type} = $c_value;
+        }
+        $attribs{start} = $fields{start};
+        $attribs{end} = $fields{end};
+    }
+    
+    if ($type eq "gene"){
+        $gene_fh->print( $attribs{gene_id}."\t".$attribs{gene_name}."\t".$attribs{gene_type}."\n" );
+        next if($attribs{transcript_type} ne "protein_coding");
         
-        $ret = `awk '\$3==\"gene\"' gencode.v19.annotation.gtf | grep '$fields[0]'`;
-        @data = split(/\t/, $ret);
-        if ($chr eq $data[0] and $pos eq $data[3]){
-            $unc_2_ensg{ $fields[1] } = $fields[0];
-        }
-    }
-}
-
-# uniquely map ENSEMBL genes to UNC genes
-my %ensg_2_unc = ();
-foreach my $key (keys %unc_2_ensg){
-    $ensg_2_unc{ $unc_2_ensg{$key} } = $key;
-}
-
-# Write (ENSEMBL gene, hugo gene) pairs to file gencode.v19_ucsc.known.txt
-my $gene_fh = IO::File->new( "gencode.v19_ucsc.known.txt", ">" ) or die "ERROR: Couldn't create file gencode.v19_ucsc.known.txt\n";
-print "Writing file gencode.v19_ucsc.known.txt\n";
-foreach(`cat gencode.v19.gene.txt`){
-    chomp;
-    my @f=split(/\t/);
-    if(exists $ensg_2_unc{$f[0]}){
-        if(!exists $hugo2entrez{$f[1]}){
-            $gene_fh->print( "$_\t0\n" );
+        if(!exists($hugo_symbols{$attribs{gene_name}})){
+            $hugo_symbols{$attribs{gene_name}} = \%attribs;
+            push @gene_names,$attribs{gene_name};
+        }elsif ($hugo_symbols{$attribs{gene_name}}->{gene_status} ne $attribs{gene_status}){
+            ($hugo_symbols{$attribs{gene_name}}->{gene_status} eq 'KNOWN') or $hugo_symbols{$attribs{gene_name}} = \%attribs;
+        }elsif ($hugo_symbols{$attribs{gene_name}}->{level} != $attribs{level}){
+            ($hugo_symbols{$attribs{gene_name}}->{level} > $attribs{level}) or $hugo_symbols{$attribs{gene_name}} = \%attribs;
         }else{
-            $gene_fh->print( "$_\t$hugo2entrez{$f[1]}\n" );
+            my $length1 = $hugo_symbols{$attribs{gene_name}}->{end} - $hugo_symbols{$attribs{gene_name}}->{start};
+            my $length2 = $attribs{end} - $attribs{start};
+            $hugo_symbols{$attribs{gene_name}} = \%attribs if( $length1<$length2 );
         }
+    }elsif ($type eq "transcript"){
+        $transcript_fh->print( $attribs{transcript_id}."\t".$attribs{gene_name}."\t".$attribs{gene_type}."\n" );
     }
 }
+
 $gene_fh->close();
+$transcript_fh->close();
+
+my %hugo_2_entrez = map{chomp; split(/\t/)}`cat hugo-entrez.txt`;
+my $hugo_fh = IO::File->new( "gencode.v19_ucsc.known.txt", ">" ) or die "ERROR: Couldn't overwrite file gencode.v19_ucsc.known.txt\n";
+foreach(@gene_names){
+    my $entrez = (defined $hugo_2_entrez{$hugo_symbols{$_}->{gene_name}}) ? $hugo_2_entrez{$hugo_symbols{$_}->{gene_name}} : 0;
+    $hugo_fh->print ($hugo_symbols{$_}->{gene_id}."\t".$hugo_symbols{$_}->{gene_name}."\t".$entrez."\n");
+}
+$hugo_fh->close();

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Create a sample-gene matrix for all samples in a study 
+# Create a sample-gene matrix for all samples in a study
 
 use strict;
 use warnings FATAL => 'all';
@@ -112,7 +112,7 @@ my $gene_name_file = $config{ ENSG_UCSC_common_genes };
 my $ubu_dir = $config{ ubu_dir } if ( defined $config{ ubu_dir } );
 
 
-########################### Read meta data to map sample IDs ################################
+########################### Read meta data for sample barcodes ################################
 
 
 my $work_dir = getcwd;
@@ -165,11 +165,25 @@ if (-d "QC" and -e "QC/filtered_samples.txt"){
         #my @files = `find .. -name Log.final.out`;
         my @files = glob("./*");
         foreach( @files ){
-            next if(!-e "$_/Log.final.out");
             s/^\.\///;
-            if (-s "$_/Quant.genes.results" and -s "$_/ubu-quan/fcounts.fpkm.normalized_results" and -s "$_/ks/sample.ks.txt" and -e "$_/Aligned.sortedByCoord.out_fastqc"){
-                $barcode_hash{$_} = $_;
-                push(@sample_list,$_);
+            if(-e "$_/Log.final.out"){
+                if (-s "$_/Quant.genes.results" and -s "$_/ubu-quan/fcounts.fpkm.normalized_results" and -s "$_/ks/sample.ks.txt" and -e "$_/Aligned.sortedByCoord.out_fastqc"){
+                    $barcode_hash{$_} = $_;
+                    push(@sample_list,$_);
+                }
+            }else{
+                my @sample_sheet = glob( "$_/*SampleSheet.csv" );
+                next if(scalar @sample_sheet == 0);
+                
+                my ($lane, $id) = ParseSampleSheet( $sample_sheet[0] );
+                next if (!defined $id or !defined $lane);
+                for (my $i=1; $i<=$lane; $i++){
+                    next if(!-e "$_/L$i");
+                    if (-s "$_/L$i/Quant.genes.results" and -s "$_/L$i/ubu-quan/fcounts.fpkm.normalized_results" and -s "$_/L$i/ks/sample.ks.txt" and -e "$_/L$i/Aligned.sortedByCoord.out_fastqc"){
+                        $barcode_hash{"$_/L$i"} = "$_-L$i";
+                        push(@sample_list,"$_/L$i");
+                    }
+                }
             }
         }
     }
@@ -180,7 +194,7 @@ if (-d "QC" and -e "QC/filtered_samples.txt"){
 ( scalar @sample_list > 1 ) or die "ERROR: Skip creating data matrix as sample number is 1\n";
 
 
-########################### Read genes of interest ################################
+########################### Get genes of interest ################################
 
 if ($gene_type eq 'transcript'){
     $gene_name_file =~ s/_ucsc\.known/\.transcript/;
@@ -316,6 +330,26 @@ if (defined $out_file){
             print( "\t$expr" );
         }
         print( "\n" );
+    }
+}
+
+sub ParseSampleSheet {
+    my $sample_sheet = shift;
+    
+    my ($idx, $lane_idx, $sample_idx) = (0, -1, -1);
+    map{$lane_idx=$idx if($_ eq "Lane"); $sample_idx=$idx if($_ eq "SampleID"); $idx++}split(/\,/, `head -1 $sample_sheet`);
+    if ($lane_idx != -1 and $sample_idx != -1) {
+        my ($lane, $sample_id);
+        foreach(`tail -n +2 $sample_sheet`){
+            my @data = split(/\,/, $_);
+            if (defined $data[$lane_idx]){
+                $lane = $data[$lane_idx] if (!defined $lane or $lane < $data[$lane_idx]);
+            }
+            $sample_id=$data[$sample_idx]  if (defined $data[$sample_idx]);
+        }
+        return ($lane, $sample_id);
+    }else{
+        warn "ERROR Unknown file format: $sample_sheet\n";
     }
 }
 
