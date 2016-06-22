@@ -9,9 +9,10 @@
 #     as its tissue type so that tumors are not used in batch effect correction.
 #
 #Cluster	GTEx_Tissue	GTEx_Batch	TCGA_Tissue	TCGA_Batch	Tissue_Type
-15	testis	1	tgct	2	testis
-15	prostate	1	prad	2	control
-16	pancreas	1	paad	2	pancreas
+14	testis	1	tgct	2	testis
+14	prostate	1	prad	2	control
+15	pancreas	1	paad	2	pancreas
+15	liver	1	lihc	2	control
 16	kidney	1	kirc	2	control
 16	kidney	1	kirp	2	control
 16	kidney	1	kich	2	control

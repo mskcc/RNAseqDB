@@ -202,6 +202,7 @@ if($flag == 0){
     #my $cmd_count = "perl $FindBin::Bin/post-process.pl -i $tissue -c $tissue_conf -u count -p -r";
     
     if ($submit){
+        print "Submit a job to run Combat...\n";
         my $ret = `perl $FindBin::Bin/qsub.pl -o $out_file -e $err_file -s \047$cmd_fpkm\047 -p 1 -t 12`;
         print $ret;
         #$ret    = `perl $FindBin::Bin/qsub.pl -o $out_file -e $err_file -s \047$cmd_tpm\047  -p 1 -t 12`;

@@ -80,10 +80,16 @@ if (!defined $quan_unit) {
 if (defined $gene_type){
     $gene_type = lc($gene_type);
     ($gene_type eq 'transcript' or $gene_type eq 'gene') or die "ERROR: unknown transcript type\n";
-    if($gene_type eq 'transcript' and $quan_tool eq 'featurecounts'){
-        print "Warning: transcript result is not available for FeatureCounts\n";
-        print @usage;
-        die;
+    if( $gene_type eq 'transcript' ){
+        if ($quan_tool eq 'featurecounts'){
+            print "Warning: transcript result is not available for FeatureCounts\n";
+            print @usage;
+            die;
+        }
+        if (defined $hugo_gene_name){
+            print "Warning: Ignore parameter '-n | --hugo-gene-name' for transcript expression\n";
+            $hugo_gene_name = 0;
+        }
     }
 }else{
     $gene_type = 'gene';

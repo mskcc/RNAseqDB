@@ -191,7 +191,7 @@ if (-d "QC" and -e "QC/filtered_samples.txt"){
 
 
 ( @sample_list ) or die "ERROR: Cannot find quantification file\n";
-( scalar @sample_list > 1 ) or die "ERROR: Skip creating data matrix as sample number is 1\n";
+#( scalar @sample_list > 1 ) or die "ERROR: Skip creating data matrix as sample number is 1\n";
 
 
 ########################### Get genes of interest ################################
