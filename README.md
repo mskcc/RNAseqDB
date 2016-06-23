@@ -18,7 +18,7 @@ Comparing with other methods, e.g. Kallisto, our pipeline provides the following
 
 Related software
 ----------
-The pipeline requires the following third-party tools, which were already installed in the HAL and LUNA cluster (see the last section). So if you are a MSKCC user, probably you don't need install anything except R package Rsubread.
+The pipeline requires the following third-party tools, whose full directories needs to be specified in a configuration file config.txt. Several example configuration files are provided in folder [configuration](https://github.com/mskcc/RNAseqDB/tree/master/configuration).
 
  STAR aligner v2.4.2a 
  
@@ -42,25 +42,17 @@ The pipeline requires the following third-party tools, which were already instal
 
  bedtools v2.23
 
-Finally, to download FASTQ files from CGHub and dbGaP, user also needs to install tools [gtdownload]() and [sratoolkit]().
+The pipeline also needs [gtdownload]() and [sratoolkit](). The pipeline wraps [gtdownload]() and [sratoolkit]() to allow user to conveniently download GTEx and TCGA samples from CGHub and dbGaP.
 
-Summary of pipeline
+These software have already been installed in the HAL and LUNA cluster (see section below). If you would like to run the pipeline in LUNA, you don't need install any of these software except Rsubread.
+
+Availability
 ----------
-We used STAR to align RNA-seq reads, RSEM and FeatureCounts to quantify gene expression, mRIN to evaluate sample degradation, RSeQC
-to measure sample strandness and quality, and SVAseq to correct batch biases.  
+The pipeline is designed to run on various computer clusters, e.g. the HAL cluster [hal.cbio.mskcc.org]() and LUNA cluster [luna.cbio.mskcc.org]().  
 
-Comparing with other methods, e.g. the latest Kallisto, our pipeline provides the following functionality that are important for RNA-seq analysis:
- 1. It creates BAM files that are required by QC tools.
- 2. It measures sample degradation and excludes degraded samples.
- 3. It performs batch effect correction to make samples comparable accross studies.
+For LUNA user, the complete pipeline was installed under directory /ifs/e63data/schultzlab/wangq/bin/RNAseqDB. 
 
-Installation
-----------
-For MSKCC users, the complete pipeline was already installed in the Luna cluster [luna.cbio.mskcc.org]() under the following directory:
-
-/ifs/e63data/schultzlab/wangq/bin/RNAseqDB
-
-To run the pipeline in Luna, user needs to specify some paths using the environment variables PATH, PYTHONPATH, and PERL5LIB. The following is a summary of the paths user can add into personal '.bashrc' file. 
+To run the pipeline in LUNA, user needs to specify some paths using the environment variables PATH, PYTHONPATH, and PERL5LIB. The following is a summary of the paths user can add into personal '.bashrc' file. These paths were summarized in file [configuration/sourceme](https://github.com/mskcc/RNAseqDB/blob/master/configuration/sourceme). 
  1. export PERL5LIB=/ifs/e63data/schultzlab/wangq/perl5:/opt/common/CentOS_6/perl/perl-5.22.0/lib/5.22.0:/ifs/e63data/schultzlab/opt/perl5/lib/perl5:/ifs/e63data/schultzlab/opt/perl5/lib/perl5/czplib
  2. export PATH=/opt/common/CentOS_6-dev/perl/perl-5.22.0/bin:$PATH
  3. export PATH=/opt/common/CentOS_6/python/python-2.7.8/bin/:$PATH
@@ -71,6 +63,37 @@ To run the pipeline in Luna, user needs to specify some paths using the environm
 In the HAL cluster [hal.cbio.mskcc.org](), the program was installed under this directory: 
 
 /cbio/ski/schultz/home/wangq/scripts
+
+Quick start
+----------
+Suppose we want to analyze a set of RNA-seq samples under a directory ~/data/RNA-seq/. 
+
+If samples are in SRA format, they should be put directly in ~/data/RNA-seq/. For FASTQ or BAM files, each sample should be placed in one sub-directory under ~/data/RNA-seq/. The script will automatically find and analyze all the samples under the given directory ~/data/RNA-seq/. For samples downloaded from GTEx or TCGA, user should also put meta data file, SraRunTable.txt for GTEx and manifest.xml for TCGA, under ~/data/RNA-seq/.
+
+To run the pipeline, firstly initialize the environment variables using the following command:
+
+    source /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/sourceme
+
+Then, use the command below to analyze all the samples under the directory ~/data/RNA-seq/:
+
+    perl /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/pipeline.pl -i ~/data/RNA-seq/ -s
+
+The argument '-s' means to submit a job for each sample. 
+
+The script pipeline.pl requires a configuration file to find and execute other software it needs. But we did not specified it in the command line above. In this case, The script utilizes a default configuration file, config.txt, under its own directory /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/.
+
+Another script pipeline-wrapper.pl provides more functionality, e.g. batch bias correction, than pipeline.pl. When executed with no argument or with the argument “-h”, pipeline-wrapper.pl, as well as other script file, will print detailed instructions on how to use it.
+
+After all the jobs terminate, you can (optionally) use another script file collect-qc.pl to create a report on the quality of the samples and to filter out low quality samples. 
+
+    perl /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/collect-qc.pl -i ~/data/RNA-seq/
+
+For expression of the genes in all samples, if you want to create a sample-gene matrix, you can run  create-matrix.pl:
+
+    perl /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/pipeline.pl -i ~/data/RNA-seq/ -o data-matrix-file.txt -p
+
+The script create-matrix.pl provides different raw or normalized outputs: TPM, FPKM, and read count for gene or transcript expression. 
+
 
 Contact
 ----------
