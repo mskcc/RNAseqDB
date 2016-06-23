@@ -52,7 +52,7 @@ The pipeline is designed to run on various computer clusters, e.g. the HAL clust
 
 For LUNA user, the complete pipeline was installed under directory /ifs/e63data/schultzlab/wangq/bin/RNAseqDB. 
 
-To run the pipeline in LUNA, user needs to specify some paths using the environment variables PATH, PYTHONPATH, and PERL5LIB. The following is a summary of the paths user can add into personal '.bashrc' file. These paths were summarized in file [configuration/sourceme](https://github.com/mskcc/RNAseqDB/blob/master/configuration/sourceme). 
+To run the pipeline in LUNA, user needs to specify some paths using the environment variables PATH, PYTHONPATH, and PERL5LIB. The following is a summary of the paths user can add into personal '.bashrc' file. These paths were also summarized in file [configuration/sourceme](https://github.com/mskcc/RNAseqDB/blob/master/configuration/sourceme). 
  1. export PERL5LIB=/ifs/e63data/schultzlab/wangq/perl5:/opt/common/CentOS_6/perl/perl-5.22.0/lib/5.22.0:/ifs/e63data/schultzlab/opt/perl5/lib/perl5:/ifs/e63data/schultzlab/opt/perl5/lib/perl5/czplib
  2. export PATH=/opt/common/CentOS_6-dev/perl/perl-5.22.0/bin:$PATH
  3. export PATH=/opt/common/CentOS_6/python/python-2.7.8/bin/:$PATH
@@ -66,9 +66,9 @@ In the HAL cluster [hal.cbio.mskcc.org](), the program was installed under this 
 
 Quick start
 ----------
-Suppose we want to analyze a set of RNA-seq samples under a directory ~/data/RNA-seq/. 
+Suppose you want to analyze a set of RNA-seq samples under a directory ~/data/RNA-seq/. 
 
-If samples are in SRA format, they should be put directly in ~/data/RNA-seq/. For FASTQ or BAM files, each sample should be placed in one sub-directory under ~/data/RNA-seq/. The script will automatically find and analyze all the samples under the given directory ~/data/RNA-seq/. For samples downloaded from GTEx or TCGA, user should also put meta data file, SraRunTable.txt for GTEx and manifest.xml for TCGA, under ~/data/RNA-seq/.
+If samples are in SRA format, you should put them directly in ~/data/RNA-seq/. For FASTQ or BAM files, you should save each sample in one sub-directory under ~/data/RNA-seq/. The script will automatically find and analyze all the samples under the given directory ~/data/RNA-seq/. For samples downloaded from GTEx or TCGA, user should also put meta data file, SraRunTable.txt for GTEx and manifest.xml for TCGA, under ~/data/RNA-seq/.
 
 To run the pipeline, firstly initialize the environment variables using the following command:
 
@@ -84,7 +84,7 @@ The script pipeline.pl requires a configuration file to find and execute other s
 
 Another script pipeline-wrapper.pl provides more functionality, e.g. batch bias correction, than pipeline.pl. When executed with no argument or with the argument “-h”, pipeline-wrapper.pl, as well as other script file, will print detailed instructions on how to use it.
 
-After all the jobs terminate, you can (optionally) use another script file collect-qc.pl to create a report on the quality of the samples and to filter out low quality samples. 
+After all the jobs terminate, you can (optionally) use another script file collect-qc.pl to create a report on the quality of the samples and to filter out low quality one. 
 
     perl /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/collect-qc.pl -i ~/data/RNA-seq/
 
