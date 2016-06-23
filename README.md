@@ -88,11 +88,12 @@ After all the jobs terminate, you can (optionally) use another script file colle
 
     perl /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/collect-qc.pl -i ~/data/RNA-seq/
 
-For expression of the genes in all samples, if you want to create a sample-gene matrix, you can run  create-matrix.pl:
+For expression of the genes in all samples, if you want to create a sample-gene matrix, you can run create-matrix.pl:
 
-    perl /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/pipeline.pl -i ~/data/RNA-seq/ -o data-matrix-file.txt -p
+    perl /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/create-matrix.pl -i ~/data/RNA-seq/ -o data-matrix-file.txt -p
 
-The script create-matrix.pl provides different raw or normalized outputs: TPM, FPKM, and read count for gene or transcript expression. 
+The script create-matrix.pl provides both raw or normalized outputs: read count, TPM, and FPKM, for both gene or transcript expression. 
+
 Batch bias correction
 ----------
 
