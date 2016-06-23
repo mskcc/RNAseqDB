@@ -93,7 +93,18 @@ For expression of the genes in all samples, if you want to create a sample-gene 
     perl /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/pipeline.pl -i ~/data/RNA-seq/ -o data-matrix-file.txt -p
 
 The script create-matrix.pl provides different raw or normalized outputs: TPM, FPKM, and read count for gene or transcript expression. 
+Batch bias correction
+----------
 
+If you want to compare TCGA samples with GTEx samples, our pipeline can help you correct biases specific to the TCGA and GTEx projects. 
+
+To do it, you need specify paths of your data in the configuration file. In the example configuration file [config-luna.txt](https://github.com/mskcc/RNAseqDB/blob/master/configuration/config-luna.txt), variables 'gtex_path' and 'tcga_path' point to two directories that are used to store GTEx and TCGA data, respectively.
+
+The script file, post-process.pl and run-combat.R, do the actual work of batch effect correction. Another script, pipeline-wrapper.pl, wraps all necessary steps together to make analysis easy. The following is the command I used to analyze bladder tissue:
+
+    perl /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/pipeline-wrapper.pl -t bladder -s
+
+This is what happen when running the command above: the script pipeline-wrapper.pl firstly reads a configuration file [tissue-conf.txt](https://github.com/mskcc/RNAseqDB/blob/master/configuration/tissue-conf.txt) for lines containing the word 'bladder'. Directories storing GTEx and TCGA samples are then obtained by concatenating 'gtex_path' and 'tcga_path' with the keywords found in [tissue-conf.txt](https://github.com/mskcc/RNAseqDB/blob/master/configuration/tissue-conf.txt). Then, the script submits jobs for the samples and does batch bias correction after all jobs terminates. Finally, sample-gene matrices are created.
 
 Contact
 ----------
