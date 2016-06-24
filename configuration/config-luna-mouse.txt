@@ -1,6 +1,6 @@
 ##############################################
 ## The code can run in both hal and luna. These are the settings 
-## to run the pipeline in luna (Human genome as reference). Please 
+## to run the pipeline in luna (Mouse genome as reference). Please 
 ## don't use this configuration file for other species. 
 
 ##########################################
