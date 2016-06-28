@@ -116,7 +116,14 @@ if (defined $fq1 and defined $fq2) {
             ($lane, $id) = ParseSampleSheet( $sampleSheet[0] );
             my ($fq1, $fq2);
             for (my $i=1; $i<=$lane; $i++){
-                map{ if(/L0+$i/ and /R1/){$fq1=(defined $fq1)?"$fq1,$_":$_}; if(/L0+$i/ and /R2/){$fq2=(defined $fq2)?"$fq2,$_":$_} }@fqs;
+                foreach(@fqs) {
+                    if((/L0+$i/ or /lane_$i/) and (/R1/ or /1.fastq/)){
+                        $fq1=(defined $fq1)?"$fq1,$_":$_;
+                    }
+                    if((/L0+$i/ or /lane_$i/) and (/R2/ or /2.fastq/)){
+                        $fq2=(defined $fq2)?"$fq2,$_":$_;
+                    }
+                }
             }
             Run_Star($fq1, $fq2) if (defined $fq1 and defined $fq2);
         }
@@ -136,10 +143,11 @@ sub ParseSampleSheet {
     my $sample_sheet = shift;
     
     my ($idx, $lane_idx, $sample_idx) = (0, -1, -1);
-    map{$lane_idx=$idx if($_ eq "Lane"); $sample_idx=$idx if($_ eq "SampleID"); $idx++}split(/\,/, `head -1 $sample_sheet`);
+    map{chomp;$lane_idx=$idx if($_ eq "Lane"); $sample_idx=$idx if($_ eq "SampleID"); $idx++}split(/\,/, `head -1 $sample_sheet`);
     if ($lane_idx != -1 and $sample_idx != -1) {
         my ($lane, $sample_id);
         foreach(`tail -n +2 $sample_sheet`){
+            chomp;
             my @data = split(/\,/, $_);
             if (defined $data[$lane_idx]){
                 $lane = $data[$lane_idx] if (!defined $lane or $lane < $data[$lane_idx]);

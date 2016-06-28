@@ -107,6 +107,18 @@ The script file, post-process.pl and run-combat.R, do the actual work of batch e
 
 This is what happen when running the command above: the script pipeline-wrapper.pl firstly reads a configuration file [tissue-conf.txt](https://github.com/mskcc/RNAseqDB/blob/master/configuration/tissue-conf.txt) for lines containing the word 'bladder'. Directories storing GTEx and TCGA samples are then obtained by concatenating 'gtex_path' and 'tcga_path' with the keywords found in [tissue-conf.txt](https://github.com/mskcc/RNAseqDB/blob/master/configuration/tissue-conf.txt). Then, the script submits jobs for the samples and does batch bias correction after all jobs terminates. Finally, sample-gene matrices are created.
 
+Handling replicates
+----------
+
+If a sample has more than 2 FASTQ files or has multiple replicates, user should provide a file named SampleSheet.csv under the same directory of the sample FASTQ files. The file SampleSheet.csv should be CSV format and include at least two columns: 'SampleID' and 'Lane'. 
+
+In the script file [pipeline.pl](https://github.com/mskcc/RNAseqDB/blob/master/pipeline.pl), an arugment '-m | --merge-replicates' is provided to allow user either to merge all replicates of each sample in the analysis (if '-m' is specified) or analyze each replicate separately.
+
+The following is an example command to merge all replicates of each sample under directory ~/data/RNA-seq/, 
+
+    perl /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/pipeline.pl -i ~/data/RNA-seq/ -s -m
+
+
 Contact
 ----------
 
