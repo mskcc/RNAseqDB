@@ -5,7 +5,7 @@
 #  3. Batch numbers are used directly by ComBat to fix biases between batches.
 #  4. Tissue directory names match the texts in columns GTEx_Tissue/TCGA_Tissue. 
 #  5. If a cluster includes different tissues, specify each in the last column to
-#     preserve tissue infomation. If a tissue serves as control, then use 'control'
+#     preserve tissue information. If a tissue serves as control, then use 'control'
 #     as its tissue type so that tumors are not used in batch effect correction.
 #
 #Cluster	GTEx_Tissue	GTEx_Batch	TCGA_Tissue	TCGA_Batch	Tissue_Type
@@ -18,4 +18,10 @@
 16	kidney	1	kich	2	control
 16	adrenal	1	acc	2	adrenal
 16	adrenal	1	pcpg	2	adrenal
+17	liver	1	lihc	2	control
+17	liver	1	chol	2	chol
+17	liver	1	dlbc	2	dlbc
+18	lung	1	luad	2	control
+18	lung	1	lusc	2	control
+18	lung	1	meso	2	meso
 

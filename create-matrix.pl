@@ -308,10 +308,13 @@ foreach my $line (@sample_list){
 
 chdir $work_dir;
 
+my @header_ids;
+map{$_ = $barcode_hash{$_} if(defined $barcode_hash{$_}); push (@header_ids, $_)}@samples;
+
 # Store the matrix
 if (defined $out_file){
     my $r_fh = IO::File->new( $out_file, ">" ) or die "ERROR: Failed to create file $out_file\n";
-    $r_fh->print( "Gene\tDescription\t". join("\t", map{exists $barcode_hash{$_} ? $barcode_hash{$_} : $_}@samples) . "\n" );
+    $r_fh->print( "Gene\tDescription\t". join("\t", @header_ids) . "\n" );
     foreach my $gene (sort {$gene_list{$a} <=> $gene_list{$b}} (keys %gene_list)){
         $r_fh->print("$gene\t$ens2hugo{$gene}");
         foreach my $sample ( @samples ){
@@ -322,7 +325,7 @@ if (defined $out_file){
     }
     $r_fh->close;
 }else{
-    print( "Gene\tDescription\t". join("\t", map{exists $barcode_hash{$_} ? $barcode_hash{$_} : $_}@samples) . "\n" );
+    print( "Gene\tDescription\t". join("\t", @header_ids) . "\n" );
     foreach my $gene (sort {$gene_list{$a} <=> $gene_list{$b}} (keys %gene_list)){
         print("$gene\t$ens2hugo{$gene}");
         foreach my $sample ( @samples ){
@@ -337,10 +340,11 @@ sub ParseSampleSheet {
     my $sample_sheet = shift;
     
     my ($idx, $lane_idx, $sample_idx) = (0, -1, -1);
-    map{$lane_idx=$idx if($_ eq "Lane"); $sample_idx=$idx if($_ eq "SampleID"); $idx++}split(/\,/, `head -1 $sample_sheet`);
+    map{chomp;$lane_idx=$idx if($_ eq "Lane"); $sample_idx=$idx if($_ eq "SampleID"); $idx++}split(/\,/, `head -1 $sample_sheet`);
     if ($lane_idx != -1 and $sample_idx != -1) {
         my ($lane, $sample_id);
         foreach(`tail -n +2 $sample_sheet`){
+            chomp;
             my @data = split(/\,/, $_);
             if (defined $data[$lane_idx]){
                 $lane = $data[$lane_idx] if (!defined $lane or $lane < $data[$lane_idx]);

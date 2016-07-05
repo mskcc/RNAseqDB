@@ -112,6 +112,10 @@ Handling replicates
 
 If a sample has more than 2 FASTQ files or has multiple replicates, user should provide a file named SampleSheet.csv under the same directory of the sample FASTQ files. The file SampleSheet.csv should be CSV format and include at least two columns: 'SampleID' and 'Lane'. 
 
+Below is the content of an example SampleSheet.csv file. It is the simplest sample sheet file allowed, as it contains only two necessary columns. With it, the program will look for all FASTQ files matching name prefix '130723_7001407_0116_AC2AEVACXX' and with lane number<=8 (each lane is regarded a replicate).      
+    SampleID,Lane
+    130723_7001407_0116_AC2AEVACXX,8
+
 In the script file [pipeline.pl](https://github.com/mskcc/RNAseqDB/blob/master/pipeline.pl), an arugment '-m | --merge-replicates' is provided to allow user either to merge all replicates of each sample in the analysis (if '-m' is specified) or analyze each replicate separately.
 
 The following is an example command to merge all replicates of each sample under directory ~/data/RNA-seq/, 
