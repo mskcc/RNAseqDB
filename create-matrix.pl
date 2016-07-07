@@ -309,7 +309,7 @@ foreach my $line (@sample_list){
 chdir $work_dir;
 
 my @header_ids;
-map{$_ = $barcode_hash{$_} if(defined $barcode_hash{$_}); push (@header_ids, $_)}@samples;
+map{ if(defined $barcode_hash{$_}){push @header_ids, $barcode_hash{$_}}else{push @header_ids, $_}}@samples;
 
 # Store the matrix
 if (defined $out_file){

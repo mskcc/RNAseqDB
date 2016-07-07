@@ -86,7 +86,7 @@ if (defined $gene_type){
             print @usage;
             die;
         }
-        if (defined $hugo_gene_name){
+        if ($hugo_gene_name){
             print "Warning: Ignore parameter '-n | --hugo-gene-name' for transcript expression\n";
             $hugo_gene_name = 0;
         }
@@ -481,7 +481,7 @@ sub ReadSampleExpression() {
         
         my $n=0;
         if($quan_tool eq "rsem" and $quan_unit ne "fpkm"){
-            $quan_file = "$line/Quant.isoforms.results" if($gene_type eq "transcript");
+            $quan_file = "$tissue/$line/Quant.isoforms.results" if($gene_type eq "transcript");
             my $column = -1;
             my $idx = 0;
             my $col_name = "TPM";
