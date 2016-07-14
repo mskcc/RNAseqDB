@@ -163,8 +163,8 @@ sub GetReplicates {
     for (my $i=1; $i<=$lane; $i++){
         my ($fq1, $fq2);
         foreach my $fq (@fastq_files) {
-            $fq1 = abs_path($fq) if(($fq=~/L0+$i/ or $fq=~/lane_$i/) and ($fq=~/R1/ or $fq=~/1.fastq/));
-            $fq2 = abs_path($fq) if(($fq=~/L0+$i/ or $fq=~/lane_$i/) and ($fq=~/R2/ or $fq=~/2.fastq/));
+            $fq1 = abs_path($fq) if(($fq=~/L0+$i/ or $fq=~/lane_$i/) and ($fq=~/R1/));# or $fq=~/1.fastq/));
+            $fq2 = abs_path($fq) if(($fq=~/L0+$i/ or $fq=~/lane_$i/) and ($fq=~/R2/));# or $fq=~/2.fastq/));
         }
         if(defined $fq1 and defined $fq2){
             `mkdir -p $_/L$i; ln -s $fq1 $fq2 $_/L$i/ 2>/dev/null` if( $split_rep and !$mergeRep);

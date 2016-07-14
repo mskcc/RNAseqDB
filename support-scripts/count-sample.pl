@@ -28,7 +28,7 @@ my @dirs = glob("$gtex_path/sra/*");
 foreach (@dirs){
     if(!-s "$_/QC/filtering_sum.txt"){
         s/$gtex_path\/sra\///;
-        print "Warning: File $_/QC/filtering_sum.txt does not exist\n";
+        #print "Warning: File $_/QC/filtering_sum.txt does not exist\n";
         next;
     }
     my ($total, $filtered, $unused, $degraded, $poorlymapped) = CountSamples ($_);
@@ -55,7 +55,7 @@ print "TCGA\n";
 foreach (@dirs){
     if(!-s "$_/QC/filtering_sum.txt") {
         s/$tcga_path\///;
-        print "Warning: File $_/QC/filtering_sum.txt does not exist\n";
+        #print "Warning: File $_/QC/filtering_sum.txt does not exist\n";
         next;
     }
     my ($total, $filtered, $unused, $degraded, $poorlymapped) = CountSamples ($_);

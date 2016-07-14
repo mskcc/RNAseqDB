@@ -2,6 +2,7 @@
 
 export PERL5LIB=/ifs/e63data/schultzlab/wangq/perl5:/opt/common/CentOS_6/perl/perl-5.22.0/lib/5.22.0:/ifs/e63data/schultzlab/opt/perl5/lib/perl5:/ifs/e63data/schultzlab/opt/perl5/lib/perl5/czplib
 export PATH=/opt/common/CentOS_6-dev/perl/perl-5.22.0/bin:$PATH
+export PATH=/opt/common/CentOS_6-dev/samtools/samtools-1.3:$PATH
 
 export PYTHONPATH=/ifs/e63data/schultzlab/bin/RSeQC-2.6.1/opt/common/CentOS_6/python/python-2.7.8/lib/python2.7/site-packages:$PYTHONPATH
 export PATH=/opt/common/CentOS_6/python/python-2.7.8/bin/:$PATH
