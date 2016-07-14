@@ -57,7 +57,7 @@ To run the pipeline in LUNA, user needs to specify some paths using the environm
 
 In the HAL cluster [hal.cbio.mskcc.org](), a copy of the pipeline was under this directory: /cbio/ski/schultz/home/wangq/scripts
 
-For user outside MSKCC, the source code of the pipeline is freely accessible through GitHub (at https://github.com/mskcc/RNAseqDB/).
+For users outside MSKCC, the source code of the pipeline is freely accessible through GitHub (at https://github.com/mskcc/RNAseqDB/).
 
 Quick start
 ----------
@@ -118,6 +118,11 @@ The following is an example command to merge all replicates of each sample under
 
     perl /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/pipeline.pl -i ~/data/RNA-seq/ -s -m
 
+Handling species other than human
+----------
+The pipeline can be applied to species other than human. An example configuration file, [config-luna-mouse.txt](https://github.com/mskcc/RNAseqDB/blob/master/configuration/config-luna-mouse.txt), for mouse is provided under folder [configuration](https://github.com/mskcc/RNAseqDB/tree/master/configuration). To quantify gene/transcript expression for mouse samples, user need to specify mouse configuration file (not necessarily in command line):
+
+    perl /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/pipeline.pl -i ~/data/RNA-seq/ -s -m -c /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/config-luna-mouse.txt
 
 Contact
 ----------
