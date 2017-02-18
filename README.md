@@ -126,7 +126,7 @@ The pipeline can be applied to species other than human. An example configuratio
 Contact
 ----------
 
-    Qingguo Wang, Jianjiong Gao
+    Jianjiong Gao
     Nikolaus Schultz Lab
     Memorial Sloan Kettering Cancer Center
     New York, NY 10065
