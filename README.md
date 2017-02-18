@@ -8,8 +8,7 @@ Methods
 ----------
 The input of the pipeline is paired-end raw sequencing reads (in FASTQ format). The raw reads of the RNA-seq samples for the TCGA and GTEx projects were retrieved from the Cancer Genomics Hub (CGHub, https://cghub.ucsc.edu) and the Database of Genotypes and Phenotypes (dbGaP, http://www.ncbi.nlm.nih.gov/gap), respectively.
 
-We used STAR to align sequencing reads, RSEM and FeatureCounts to quantify gene expression, mRIN to evaluate sample degradation, RSeQC
-to measure sample strandness and quality, and SVAseq to correct batch biases.  
+We used STAR to align sequencing reads, RSEM and FeatureCounts to quantify gene expression, mRIN to evaluate sample degradation, RSeQC to measure sample strandness and quality, and SVAseq to correct batch biases.  
 
 Related software
 ----------
@@ -127,7 +126,7 @@ The pipeline can be applied to species other than human. An example configuratio
 Contact
 ----------
 
-    Qingguo Wang
+    Qingguo Wang, Jianjiong Gao
     Nikolaus Schultz Lab
     Memorial Sloan Kettering Cancer Center
     New York, NY 10065
