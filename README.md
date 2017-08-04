@@ -123,6 +123,10 @@ The pipeline can be applied to species other than human. An example configuratio
 
     perl /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/pipeline.pl -i ~/data/RNA-seq/ -s -m -c /ifs/e63data/schultzlab/wangq/bin/RNAseqDB/config-luna-mouse.txt
 
+Citation
+----------
+Qingguo Wang, Joshua Armenia, Chao Zhang, Alexander V Penson, Ed Reznik, Liguo Zhang, Thais Minet, Angelica Ochoa, Benjamin E Gross, Christine A Iacobuzio-Donahue, Doron Betel, Barry S Taylor, Jianjiong Gao, Nikolaus Schultz. Enabling cross-study analysis of RNA-Sequencing data. [bioRxiv](https://doi.org/10.1101/110734) 110734, 2017.
+
 Contact
 ----------
 
