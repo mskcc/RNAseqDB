@@ -101,6 +101,17 @@ The script file, post-process.pl and run-combat.R, do the actual work of batch e
 
 This is what happen when running the command above: the script pipeline-wrapper.pl firstly reads a configuration file [tissue-conf.txt](https://github.com/mskcc/RNAseqDB/blob/master/configuration/tissue-conf.txt) for lines containing the word 'bladder'. Directories storing GTEx and TCGA samples are then obtained by concatenating 'gtex_path' and 'tcga_path' with the keywords found in [tissue-conf.txt](https://github.com/mskcc/RNAseqDB/blob/master/configuration/tissue-conf.txt). Then, the script submits jobs for the samples and does batch bias correction after all job terminates. Finally, the script creates sample-gene matrices from the samples.
 
+Data
+----------
+We have applied the pipeline to GTEx and TCGA. The data generated has been deposited into a directory [data](https://github.com/mskcc/RNAseqDB/tree/master/data). This directory contains threes subdirectories, each corresponding to a dataset as described below. 
+
+1. [**expected_count**](https://github.com/mskcc/RNAseqDB/tree/master/data/expected_count): the maximum likelihood gene expression levels computed using RSEM, i.e. the expected_count in RSEM’s output. There are 52 data files in this subdirectory, each being a sample-gene matrix of a certain tissue type. These files can be provided to programs such as EBSeq, DESeq, or edgeR for identifying differentially expressed genes. 
+
+2. [**unnormalized**](https://github.com/mskcc/RNAseqDB/tree/master/data/unnormalized): the gene expression levels calculated from fpkm of RSEM’s output. The data matrices here, however, were not the direct output of RSEM. They underwent quantile normalization, but were not corrected for batch effects. 
+
+3. [**normalized**](https://github.com/mskcc/RNAseqDB/tree/master/data/normalized): the normalized gene expression levels (FPKM). This set of data files was not only quantile normalized, but also was corrected for batch effects (using tool ComBat).
+
+
 Handling replicates
 ----------
 
