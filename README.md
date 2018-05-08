@@ -136,6 +136,8 @@ The pipeline can be applied to species other than human. An example configuratio
 
 Citation
 ----------
+Q. Wang, J Armenia, C. Zhang, A.V. Penson, E. Reznik, L. Zhang, T. Minet, A. Ochoa, B.E. Gross, C. A. Iacobuzio-Donahue, D. Betel, B.S. Taylor, J. Gao, N. Schultz. Unifying cancer and normal RNA sequencing data from different sources. [Scientific Data](https://www.nature.com/articles/sdata201861) 5:180061, 2018.
+
 Qingguo Wang, Joshua Armenia, Chao Zhang, Alexander V Penson, Ed Reznik, Liguo Zhang, Thais Minet, Angelica Ochoa, Benjamin E Gross, Christine A Iacobuzio-Donahue, Doron Betel, Barry S Taylor, Jianjiong Gao, Nikolaus Schultz. Enabling cross-study analysis of RNA-Sequencing data. [bioRxiv](https://doi.org/10.1101/110734) 110734, 2017.
 
 Contact
