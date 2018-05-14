@@ -15,7 +15,7 @@ The normalized gene expression levels (FPKM) calculated using RSEM. This set of 
 
 file naming
 --------------
-For each tissue type, TCGA tumor and matched normal samples are stored in two seperate files: tumor in file `xxxx-xxxx-xxxx-`**tcga-t**`.txt.gz` while normal in `xxxx-xxxx-xxxx-`**tcga**`.txt.gz`. For example, TCGA bladder urothelial carcinoma are in  file `blca-rsem-fpkm-`**tcga-t**`.txt.gz` and the corresponding bladder normal tissue in file `blca-rsem-fpkm-`**tcga**`.txt.gz`. 
+For each tissue type, TCGA tumor and matched normal samples are stored in two separate files: tumor in file `xxxx-xxxx-xxxx-`**tcga-t**`.txt.gz` while normal in `xxxx-xxxx-xxxx-`**tcga**`.txt.gz`. For example, TCGA bladder urothelial carcinoma are in  file `blca-rsem-fpkm-`**tcga-t**`.txt.gz` and the corresponding bladder normal tissue in file `blca-rsem-fpkm-`**tcga**`.txt.gz`. 
 
 
 GTEx/TCGA tissue mapping
