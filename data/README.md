@@ -11,3 +11,7 @@ The gene expression levels calculated from fpkm of RSEM’s output. The data mat
 normalized
 --------------
 The normalized gene expression levels (FPKM) calculated using RSEM. This set of data files not only was quantile normalized, but was corrected for batch effects (using tool ComBat).
+
+file naming
+--------------
+For each tissue type, TCGA tumor and matched normal samples are stored in two seperate files: tumor in file `xxxx-xxxx-xxxx-`**tcga-t**`.txt.gz` and normal in `xxxx-xxxx-xxxx-`**tcga**`.txt.gz`. For example, TCGA Bladder Urothelial Carcinoma are in  file `blca-rsem-fpkm-`**tcga-t**`.txt.gz` and the matched normals in `blca-rsem-fpkm-`**tcga**`.txt.gz`. 
